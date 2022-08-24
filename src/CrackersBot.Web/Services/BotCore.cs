@@ -40,7 +40,7 @@ namespace CrackersBot.Web.Services
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
 
-            await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:Token"]);
+            await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
 
             await _discordSocketClient.SetActivityAsync(new Game("Beep boop", ActivityType.CustomStatus));
