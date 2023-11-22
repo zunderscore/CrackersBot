@@ -48,7 +48,7 @@ namespace CrackersBot.Web.Services
                             Fields =
                             [
                                 new("Actions", $"Actions registered: ${CommonNames.REGISTERED_ACTION_COUNT}"),
-                                new("Variables", $"Actions registered: ${CommonNames.REGISTERED_VARIABLE_COUNT}")
+                                new("Variables", $"Variables registered: ${CommonNames.REGISTERED_VARIABLE_COUNT}")
                             ]
                         }
                     }
@@ -97,10 +97,10 @@ namespace CrackersBot.Web.Services
 
         #region Message Deleted Event Handlers
 
-        public static List<MessageDeletedEventHandler> MessageDeletedEventHandlers => new()
-        {
+        public static List<MessageDeletedEventHandler> MessageDeletedEventHandlers =>
+        [
             DefaultMessageDeletedEventHandler
-        };
+        ];
 
         private static MessageDeletedEventHandler DefaultMessageDeletedEventHandler
         {
@@ -113,12 +113,12 @@ namespace CrackersBot.Web.Services
                         {
                             Title = "Message Deleted",
                             Color = BRAND_COLOR,
-                            Fields = new List<Automation.EmbedField>()
-                            {
+                            Fields =
+                            [
                                 new("Channel", $"<#${CommonNames.DISCORD_CHANNEL_ID}>"),
                                 new("Original Author", $"<@${CommonNames.DISCORD_AUTHOR_ID}>"),
                                 new("Original Message", $"${CommonNames.MESSAGE_TEXT}", isInline: true)
-                            }
+                            ]
                         }
                     }
                 };
@@ -134,6 +134,43 @@ namespace CrackersBot.Web.Services
                 });
 
                 return new MessageDeletedEventHandler(action, channelFilter, FilterMode.All);
+            }
+        }
+
+        #endregion
+
+        #region User Leave Event Handlers
+
+        public static List<UserLeaveEventHandler> UserLeaveEventHandlers =>
+        [
+            DefaultUserLeaveEventHandler
+        ];
+
+        private static UserLeaveEventHandler DefaultUserLeaveEventHandler
+        {
+            get
+            {
+                var parameters = new Dictionary<string, object>()
+                {
+                    { CommonNames.DISCORD_CHANNEL_ID, BOT_AUDIT_DISCORD_CHANNEL_ID },
+                    { CommonNames.DISCORD_EMBED, new Automation.Embed()
+                        {
+                            Title = "User Has Left",
+                            Color = BRAND_COLOR,
+                            Fields =
+                            [
+                                new("User", $"<@${CommonNames.DISCORD_USER_ID}>")
+                            ]
+                        }
+                    }
+                };
+
+                var action = new Dictionary<string, Dictionary<string, object>>()
+                {
+                    { BotCore.GetActionId(typeof(SendDiscordChannelMessageAction)), parameters }
+                };
+
+                return new UserLeaveEventHandler(action);
             }
         }
 

@@ -40,6 +40,7 @@ namespace CrackersBot.Web.Services
             _discordSocketClient.Ready += ClientReady;
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
+            _discordSocketClient.UserLeft += OnUserLeave;
 
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
@@ -204,6 +205,7 @@ namespace CrackersBot.Web.Services
             RegisterVariable(new DiscordAuthorIdVariable());
             RegisterVariable(new DiscordChannelIdVariable());
             RegisterVariable(new DiscordMessageIdVariable());
+            RegisterVariable(new DiscordUserIdVariable());
             RegisterVariable(new MessageTextVariable());
             RegisterVariable(new RegisteredActionCountVariable());
             RegisterVariable(new RegisteredVeriableCountVariable());
@@ -245,13 +247,6 @@ namespace CrackersBot.Web.Services
             {
                 var originalMessage = String.IsNullOrWhiteSpace(message.Value.ToString()) ? "[empty message]" : message.Value.ToString();
 
-                var embed = new EmbedBuilder()
-                    .WithTitle("Message Deleted")
-                    .AddField("Channel", $"<#{channel.Id}>")
-                    .AddField("Original Author", $"<@{message.Value.Author.Id}>")
-                    .AddField("Original Message", originalMessage, inline: true)
-                    .Build();
-
                 if (message.Value.Channel is ITextChannel textChannel &&
                     textChannel.Guild.Id == Zunderdome.ZUNDERDOME_DISCORD_GUILD_ID)
                 {
@@ -264,6 +259,17 @@ namespace CrackersBot.Web.Services
             else
             {
                 Debug.WriteLine("Unable to retrieve deleted message from cache; skipping events");
+            }
+        }
+
+        private async Task OnUserLeave(SocketGuild guild, SocketUser user)
+        {
+            if (guild.Id == Zunderdome.ZUNDERDOME_DISCORD_GUILD_ID)
+            {
+                foreach (var handler in Zunderdome.UserLeaveEventHandlers)
+                {
+                    await handler.Handle(this, user);
+                }
             }
         }
     }
