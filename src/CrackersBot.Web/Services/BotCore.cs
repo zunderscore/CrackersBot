@@ -14,7 +14,7 @@ namespace CrackersBot.Web.Services
     public class BotCore : IBotCore
     {
         private readonly IConfiguration _config;
-        private DiscordSocketClient _discordSocketClient;
+        private readonly DiscordSocketClient _discordSocketClient;
 
         public BotCore(IConfiguration config)
         {
@@ -22,6 +22,7 @@ namespace CrackersBot.Web.Services
             _discordSocketClient = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 MessageCacheSize = 50,
+                GatewayIntents = GatewayIntents.All
             });
         }
 
@@ -43,8 +44,8 @@ namespace CrackersBot.Web.Services
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
 
-            await _discordSocketClient.SetActivityAsync(new Game("Beep boop", ActivityType.CustomStatus));
-            
+            await _discordSocketClient.SetActivityAsync(new Game("Love Games", ActivityType.Playing));
+
             await OnBotStarted();
         }
 
@@ -97,7 +98,7 @@ namespace CrackersBot.Web.Services
                 Debug.WriteLine($"Unable to unregister Action {id} since it is not currently registered");
                 return;
             }
-            
+
             if (RegisteredActions.TryRemove(id, out _))
             {
                 Debug.WriteLine($"Unregistered Action {id}");
@@ -150,7 +151,7 @@ namespace CrackersBot.Web.Services
                 Debug.WriteLine($"Unable to unregister Variable {token} since it is not currently registered");
                 return;
             }
-            
+
             if (RegisteredVariables.TryRemove(token, out _))
             {
                 Debug.WriteLine($"Unregistered Variable {token}");

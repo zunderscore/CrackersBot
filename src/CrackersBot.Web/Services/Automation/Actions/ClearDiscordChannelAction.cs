@@ -44,7 +44,11 @@ namespace CrackersBot.Web.Services.Automation.Actions
             if (channel is ITextChannel textChannel)
             {
                 var messages = await textChannel.GetMessagesAsync(limit).FlattenAsync();
-                await textChannel.DeleteMessagesAsync(messages);
+                try
+                {
+                    await textChannel.DeleteMessagesAsync(messages.Where(m => DateTime.Now.Subtract(m.CreatedAt.DateTime) < TimeSpan.FromDays(14)));
+                }
+                finally { }
             }
         }
     }

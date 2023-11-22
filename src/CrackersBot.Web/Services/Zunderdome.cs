@@ -4,7 +4,6 @@ using CrackersBot.Core.Filters;
 using CrackersBot.Web.Services.Automation.Actions;
 using CrackersBot.Web.Services.Automation.Events;
 using CrackersBot.Web.Services.Automation.Filters;
-using Discord;
 
 namespace CrackersBot.Web.Services
 {
@@ -25,10 +24,10 @@ namespace CrackersBot.Web.Services
 
         #region Bot Started Event Handlers
 
-        public static List<BotStartedEventHandler> BotStartedEventHandlers => new List<BotStartedEventHandler>()
-        {
+        public static List<BotStartedEventHandler> BotStartedEventHandlers =>
+        [
             BotStarted
-        };
+        ];
 
         private static BotStartedEventHandler BotStarted
         {
@@ -46,11 +45,11 @@ namespace CrackersBot.Web.Services
                         {
                             Title = "zunderbot is online!",
                             Color = BRAND_COLOR,
-                            Fields = new List<Automation.EmbedField>()
-                            {
-                                new Automation.EmbedField("Actions", $"Actions registered: ${CommonNames.REGISTERED_ACTION_COUNT}"),
-                                new Automation.EmbedField("Variables", $"Actions registered: ${CommonNames.REGISTERED_VARIABLE_COUNT}")
-                            }
+                            Fields =
+                            [
+                                new("Actions", $"Actions registered: ${CommonNames.REGISTERED_ACTION_COUNT}"),
+                                new("Variables", $"Actions registered: ${CommonNames.REGISTERED_VARIABLE_COUNT}")
+                            ]
                         }
                     }
                 };
@@ -69,10 +68,10 @@ namespace CrackersBot.Web.Services
 
         #region Message Received Event Handlers
 
-        public static List<MessageReceivedEventHandler> MessageReceivedEventHandlers => new List<MessageReceivedEventHandler>()
-        {
+        public static List<MessageReceivedEventHandler> MessageReceivedEventHandlers =>
+        [
             LoafReaction
-        };
+        ];
 
         private static MessageReceivedEventHandler LoafReaction
         {
@@ -98,7 +97,7 @@ namespace CrackersBot.Web.Services
 
         #region Message Deleted Event Handlers
 
-        public static List<MessageDeletedEventHandler> MessageDeletedEventHandlers => new List<MessageDeletedEventHandler>()
+        public static List<MessageDeletedEventHandler> MessageDeletedEventHandlers => new()
         {
             DefaultMessageDeletedEventHandler
         };
@@ -107,7 +106,7 @@ namespace CrackersBot.Web.Services
         {
             get
             {
-                var parameters = new Dictionary<string, object>() 
+                var parameters = new Dictionary<string, object>()
                 {
                     { CommonNames.DISCORD_CHANNEL_ID, BOT_AUDIT_DISCORD_CHANNEL_ID },
                     { CommonNames.DISCORD_EMBED, new Automation.Embed()
@@ -116,9 +115,9 @@ namespace CrackersBot.Web.Services
                             Color = BRAND_COLOR,
                             Fields = new List<Automation.EmbedField>()
                             {
-                                new Automation.EmbedField("Channel", $"<#${CommonNames.DISCORD_CHANNEL_ID}>"),
-                                new Automation.EmbedField("Original Author", $"<@${CommonNames.DISCORD_AUTHOR_ID}>"),
-                                new Automation.EmbedField("Original Message", $"${CommonNames.MESSAGE_TEXT}", isInline: true)
+                                new("Channel", $"<#${CommonNames.DISCORD_CHANNEL_ID}>"),
+                                new("Original Author", $"<@${CommonNames.DISCORD_AUTHOR_ID}>"),
+                                new("Original Message", $"${CommonNames.MESSAGE_TEXT}", isInline: true)
                             }
                         }
                     }
@@ -128,7 +127,7 @@ namespace CrackersBot.Web.Services
                 {
                     { BotCore.GetActionId(typeof(SendDiscordChannelMessageAction)), parameters }
                 };
-                
+
                 var channelFilter = new DiscordChannelFilter(FilterInclusionType.Exclude, new List<ulong>() {
                     BOT_AUDIT_DISCORD_CHANNEL_ID,
                     MOD_CENTRAL_DISCORD_CHANNEL_ID
