@@ -33,11 +33,6 @@ namespace CrackersBot.Web.Services
         {
             get
             {
-                var clearChannelParameters = new Dictionary<string, object>()
-                {
-                    { CommonNames.DISCORD_CHANNEL_ID, BOT_AUDIT_DISCORD_CHANNEL_ID }
-                };
-
                 var sendStartupMessageParameters = new Dictionary<string, object>()
                 {
                     { CommonNames.DISCORD_CHANNEL_ID, BOT_AUDIT_DISCORD_CHANNEL_ID },
@@ -56,7 +51,6 @@ namespace CrackersBot.Web.Services
 
                 var actions = new Dictionary<string, Dictionary<string, object>>()
                 {
-                    { BotCore.GetActionId(typeof(ClearDiscordChannelAction)), clearChannelParameters },
                     { BotCore.GetActionId(typeof(SendDiscordChannelMessageAction)), sendStartupMessageParameters }
                 };
 
