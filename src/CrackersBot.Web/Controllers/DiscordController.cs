@@ -5,14 +5,9 @@ namespace CrackersBot.Web.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    public class DiscordController : ControllerBase
+    public class DiscordController(IBotCore bot) : ControllerBase
     {
-        private IBotCore _bot;
-
-        public DiscordController(IBotCore bot)
-        {
-            _bot = bot;
-        }
+        private readonly IBotCore _bot = bot;
 
         [HttpGet]
         public async Task<IActionResult> RegisterCallback()
@@ -29,7 +24,7 @@ namespace CrackersBot.Web.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Callback([FromBody]dynamic request)
+        public async Task<IActionResult> Callback([FromBody] dynamic request)
         {
             await Task.FromResult(() => 4);
             return Ok();

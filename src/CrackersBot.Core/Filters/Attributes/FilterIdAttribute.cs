@@ -1,7 +1,7 @@
-namespace CrackersBot.Core.Actions
+namespace CrackersBot.Core.Filters
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class ActionIdAttribute(string id) : Attribute
+    public class FilterIdAttribute(string id) : Attribute
     {
         public string Id { get; } = id;
     }

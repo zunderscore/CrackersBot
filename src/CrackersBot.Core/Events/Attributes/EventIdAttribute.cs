@@ -1,7 +1,7 @@
-namespace CrackersBot.Core.Actions
+namespace CrackersBot.Core.Events
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class ActionIdAttribute(string id) : Attribute
+    public class EventIdAttribute(string id) : Attribute
     {
         public string Id { get; } = id;
     }

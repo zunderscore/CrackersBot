@@ -1,11 +1,19 @@
+using CrackersBot.Core.Parameters;
+
 namespace CrackersBot.Core.Actions
 {
     public interface IAction
     {
-        Dictionary<string, object> ConvertRawParameters(Dictionary<string, string> rawParams);
+        Dictionary<string, IParameterType> ActionParameters { get; }
 
-        bool ValidateParameters(Dictionary<string, object> parameters);
+        string GetActionId();
+        string GetActionName();
+        string GetActionDescription();
 
-        Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context);
+        bool ValidateParameters(Dictionary<string, string> parameters);
+
+        bool DoPreRunCheck(IBotCore bot, Dictionary<string, string> rawParams);
+
+        Task Run(IBotCore bot, Dictionary<string, object> parameters);
     }
 }

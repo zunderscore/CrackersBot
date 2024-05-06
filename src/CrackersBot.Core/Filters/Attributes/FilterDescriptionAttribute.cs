@@ -1,7 +1,7 @@
-namespace CrackersBot.Core.Actions
+namespace CrackersBot.Core.Filters
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class ActionDescriptionAttribute(string description) : Attribute
+    public class FilterDescriptionAttribute(string description) : Attribute
     {
         public string Description { get; } = description;
     }

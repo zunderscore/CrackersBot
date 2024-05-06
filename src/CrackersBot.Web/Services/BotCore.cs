@@ -1,13 +1,14 @@
 using CrackersBot.Core;
 using CrackersBot.Core.Actions;
+using CrackersBot.Core.Events;
+using CrackersBot.Core.Events.Discord;
+using CrackersBot.Core.Filters;
 using CrackersBot.Core.Variables;
-using CrackersBot.Web.Services.Automation.Actions;
-using CrackersBot.Web.Services.Automation.Variables;
 using Discord;
 using Discord.WebSocket;
+using Microsoft.Azure.Cosmos;
 using System.Collections.Concurrent;
 using System.Diagnostics;
-using System.Text.RegularExpressions;
 
 namespace CrackersBot.Web.Services
 {
@@ -28,24 +29,28 @@ namespace CrackersBot.Web.Services
 
         public IDiscordClient DiscordClient => _discordSocketClient;
 
-        public ConcurrentDictionary<string, IAction> RegisteredActions { get; } = new ConcurrentDictionary<string, IAction>();
+        public ConcurrentDictionary<ulong, GuildConfig> Guilds { get; } = new();
 
-        public ConcurrentDictionary<string, IVariable> RegisteredVariables { get; } = new ConcurrentDictionary<string, IVariable>();
+        #region Core Functions
 
         internal async Task StartBotCoreAsync()
         {
             RegisterCoreActions();
             RegisterCoreVariables();
+            RegisterCoreEventHandlers();
+            RegisterCoreFilters();
+
+            await LoadGuildConfigs();
 
             _discordSocketClient.Ready += ClientReady;
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
-            _discordSocketClient.UserLeft += OnUserLeave;
+            _discordSocketClient.UserLeft += OnUserLeft;
 
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
 
-            await _discordSocketClient.SetActivityAsync(new Game("Love Games", ActivityType.Playing));
+            await _discordSocketClient.SetActivityAsync(new Game("with Loaf", ActivityType.Playing));
 
             await OnBotStarted();
         }
@@ -56,39 +61,57 @@ namespace CrackersBot.Web.Services
             await _discordSocketClient.DisposeAsync();
         }
 
-        // Actions
-
-        public static string GetActionId(Type actionType)
+        internal async Task LoadGuildConfigs()
         {
-            var attr = actionType.GetCustomAttributes(false)
-                .FirstOrDefault(a => a is ActionIdAttribute);
+            try
+            {
+                using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
 
-            if (attr is null) throw new ArgumentException($"{actionType.Name} is not a valid Action");
+                var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
+                var iterator = container.GetItemQueryIterator<GuildConfig>();
 
-            return ((ActionIdAttribute)attr).Id;
+                while (iterator.HasMoreResults)
+                {
+                    foreach (var item in await iterator.ReadNextAsync())
+                    {
+                        Guilds.TryAdd(item.GuildId, item);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+            }
         }
+
+        #endregion
+
+        #region Actions
+
+        public ConcurrentDictionary<string, IAction> RegisteredActions { get; } = new();
 
         public bool IsActionRegistered(string id)
         {
-            return RegisteredActions.Keys.Any(k => k.ToLowerInvariant() == id.ToLowerInvariant());
+            return RegisteredActions.Keys.Any(k => k.Equals(id, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public void RegisterAction(IAction action)
         {
-            var actionId = GetActionId(action.GetType());
-            if (IsActionRegistered(actionId))
+            var id = action.GetActionId();
+
+            if (IsActionRegistered(id))
             {
-                Debug.WriteLine($"Unable to register Action {actionId} as it has already been registered");
+                Debug.WriteLine($"Unable to register Action {id} as it has already been registered");
                 return;
             }
 
-            if (RegisteredActions.TryAdd(actionId, action))
+            if (RegisteredActions.TryAdd(id, action))
             {
-                Debug.WriteLine($"Registered Action {actionId}");
+                Debug.WriteLine($"Registered Action {id}");
             }
             else
             {
-                Debug.WriteLine($"Unable to register Action {actionId} (registration failed)");
+                Debug.WriteLine($"Unable to register Action {id} (registration failed)");
             }
         }
 
@@ -110,21 +133,25 @@ namespace CrackersBot.Web.Services
             }
         }
 
-        public IAction GetRegisteredAction(string actionId)
+        public IAction GetRegisteredAction(string id)
         {
-            if (!IsActionRegistered(actionId))
+            if (!IsActionRegistered(id))
             {
-                throw new ArgumentException($"Action {actionId} is not registered");
+                throw new ArgumentException($"Action {id} is not registered");
             }
 
-            return RegisteredActions[actionId];
+            return RegisteredActions[id];
         }
 
-        // Variables
+        #endregion
+
+        #region Variables
+
+        public ConcurrentDictionary<string, IVariable> RegisteredVariables { get; } = new();
 
         public bool IsVariableRegistered(string token)
         {
-            return RegisteredVariables.Keys.Any(k => k.ToLowerInvariant() == token.ToLowerInvariant());
+            return RegisteredVariables.Keys.Any(k => k.Equals(token, StringComparison.InvariantCultureIgnoreCase));
         }
 
         public void RegisterVariable(IVariable variable)
@@ -163,53 +190,141 @@ namespace CrackersBot.Web.Services
             }
         }
 
-        private List<string> GetVariableTokens(string value)
-        {
-            var tokenRegex = new Regex(@"\$(\w+)");
-            var tokens = tokenRegex.Matches(value).Cast<Match>()
-                .SelectMany(m => m.Groups.Cast<Group>()
-                    .Skip(1) // Ignore the complete group with the $ prefix
-                    .SelectMany(g => g.Captures.Cast<Capture>()
-                        .Select(c => c.Value)));
+        #endregion
 
-            return tokens.ToList();
+        #region Event Handlers
+
+        public ConcurrentDictionary<string, IEventHandler> RegisteredEventHandlers { get; } = new();
+
+        public bool IsEventHandlerRegistered(string id)
+        {
+            return RegisteredEventHandlers.Keys.Any(k => k.Equals(id, StringComparison.InvariantCultureIgnoreCase));
         }
 
-        public string ProcessVariables(string value, Dictionary<string, object> context)
+        public void RegisterEventHandler(IEventHandler handler)
         {
-            foreach (var token in GetVariableTokens(value))
-            {
-                Debug.WriteLine($"Token: {token}");
+            var id = handler.GetEventId();
 
-                if (RegisteredVariables.ContainsKey(token))
-                {
-                    value = value.Replace($"${token}", RegisteredVariables[token].GetValue(this, context));
-                }
+            if (IsEventHandlerRegistered(id))
+            {
+                Debug.WriteLine($"Unable to register Event Handler {id} as it has already been registered");
+                return;
             }
 
-            return value;
+            if (RegisteredEventHandlers.TryAdd(id, handler))
+            {
+                Debug.WriteLine($"Registered Event Handler {id}");
+            }
+            else
+            {
+                Debug.WriteLine($"Unable to register Event Handler {id} (registration failed)");
+            }
         }
 
-        // Register core items
+        public void UnregisterEventHandler(string token)
+        {
+            if (!IsEventHandlerRegistered(token))
+            {
+                Debug.WriteLine($"Unable to unregister Event Handler {token} since it is not currently registered");
+                return;
+            }
+
+            if (RegisteredEventHandlers.TryRemove(token, out _))
+            {
+                Debug.WriteLine($"Unregistered Event Handler {token}");
+            }
+            else
+            {
+                Debug.WriteLine($"Unable to unregister Event Handler {token} (removal failed)");
+            }
+        }
+
+        #endregion
+
+        #region Filters
+
+        public ConcurrentDictionary<string, IFilter> RegisteredFilters { get; } = new();
+
+        public bool IsFilterRegistered(string token)
+        {
+            return RegisteredFilters.Keys.Any(k => k.Equals(token, StringComparison.InvariantCultureIgnoreCase));
+        }
+
+        public void RegisterFilter(IFilter filter)
+        {
+            var id = filter.GetFilterId();
+
+            if (IsFilterRegistered(id))
+            {
+                Debug.WriteLine($"Unable to register Filter {id} as it has already been registered");
+                return;
+            }
+
+            if (RegisteredFilters.TryAdd(id, filter))
+            {
+                Debug.WriteLine($"Registered Filter {id}");
+            }
+            else
+            {
+                Debug.WriteLine($"Unable to register Filter {id} (registration failed)");
+            }
+        }
+
+        public void UnregisterFilter(string token)
+        {
+            if (!IsFilterRegistered(token))
+            {
+                Debug.WriteLine($"Unable to unregister Filter {token} since it is not currently registered");
+                return;
+            }
+
+            if (RegisteredFilters.TryRemove(token, out _))
+            {
+                Debug.WriteLine($"Unregistered Filter {token}");
+            }
+            else
+            {
+                Debug.WriteLine($"Unable to unregister Filter {token} (removal failed)");
+            }
+        }
+
+        #endregion
+
+        #region Register core items
 
         private void RegisterCoreActions()
         {
-            RegisterAction(new SendDiscordChannelMessageAction());
-            RegisterAction(new SendDiscordDirectMessageAction());
-            RegisterAction(new ReactToDiscordMessageAction());
-            RegisterAction(new ClearDiscordChannelAction());
+            foreach (var action in CoreHelpers.GetAllCoreActions())
+            {
+                RegisterAction(action);
+            }
         }
 
         private void RegisterCoreVariables()
         {
-            RegisterVariable(new DiscordAuthorIdVariable());
-            RegisterVariable(new DiscordChannelIdVariable());
-            RegisterVariable(new DiscordMessageIdVariable());
-            RegisterVariable(new DiscordUserIdVariable());
-            RegisterVariable(new MessageTextVariable());
-            RegisterVariable(new RegisteredActionCountVariable());
-            RegisterVariable(new RegisteredVeriableCountVariable());
+            foreach (var variable in CoreHelpers.GetAllCoreVariables())
+            {
+                RegisterVariable(variable);
+            }
         }
+
+        private void RegisterCoreEventHandlers()
+        {
+            foreach (var handler in CoreHelpers.GetAllCoreEventHandlers())
+            {
+                RegisterEventHandler(handler);
+            }
+        }
+
+        private void RegisterCoreFilters()
+        {
+            foreach (var filter in CoreHelpers.GetAllCoreFilters())
+            {
+                RegisterFilter(filter);
+            }
+        }
+
+        #endregion
 
         // Bot events
 
@@ -223,20 +338,37 @@ namespace CrackersBot.Web.Services
 
         private async Task OnBotStarted()
         {
-            foreach (var handler in Zunderdome.BotStartedEventHandlers)
+            foreach (var (_, guild) in Guilds)
             {
-                await handler.Handle(this);
+                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == BotStartedEventHandler.EVENT_ID))
+                {
+                    await RegisteredEventHandlers[BotStartedEventHandler.EVENT_ID]
+                        .Handle(this, eventHandlerDefinition);
+                }
             }
         }
 
         private async Task OnMessageReceived(SocketMessage message)
         {
-            if (message.Channel is SocketTextChannel textChannel &&
-                textChannel.Guild.Id == Zunderdome.ZUNDERDOME_DISCORD_GUILD_ID)
+            var context = new Dictionary<string, object>()
             {
-                foreach (var handler in Zunderdome.MessageReceivedEventHandlers)
+                { CommonNames.DISCORD_AUTHOR_ID, message.Author.Id },
+                { CommonNames.DISCORD_CHANNEL_ID, message.Channel.Id },
+                { CommonNames.DISCORD_MESSAGE_ID, message.Id },
+                { CommonNames.MESSAGE_TEXT, message.ToString() ?? String.Empty }
+            };
+
+            if (message.Channel is SocketTextChannel textChannel)
+            {
+                var guildId = textChannel.Guild.Id;
+
+                if (Guilds.TryGetValue(guildId, out var guild))
                 {
-                    await handler.Handle(this, message);
+                    foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == MessageReceivedEventHandler.EVENT_ID))
+                    {
+                        await RegisteredEventHandlers[MessageReceivedEventHandler.EVENT_ID]
+                            .Handle(this, eventHandlerDefinition, context);
+                    }
                 }
             }
         }
@@ -245,14 +377,25 @@ namespace CrackersBot.Web.Services
         {
             if (message.HasValue)
             {
-                var originalMessage = String.IsNullOrWhiteSpace(message.Value.ToString()) ? "[empty message]" : message.Value.ToString();
-
-                if (message.Value.Channel is ITextChannel textChannel &&
-                    textChannel.Guild.Id == Zunderdome.ZUNDERDOME_DISCORD_GUILD_ID)
+                var context = new Dictionary<string, object>()
                 {
-                    foreach (var handler in Zunderdome.MessageDeletedEventHandlers)
+                    { CommonNames.DISCORD_AUTHOR_ID, message.Value.Author?.Id ?? 0 },
+                    { CommonNames.DISCORD_CHANNEL_ID, channel.Id },
+                    { CommonNames.DISCORD_MESSAGE_ID, message.Id },
+                    { CommonNames.MESSAGE_TEXT, message.Value.ToString() ?? String.Empty }
+                };
+
+                if (message.Value.Channel is ITextChannel textChannel)
+                {
+                    var guildId = textChannel.Guild.Id;
+
+                    if (Guilds.TryGetValue(guildId, out var guild))
                     {
-                        await handler.Handle(this, message.Id, channel.Id, message.Value);
+                        foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == MessageDeletedEventHandler.EVENT_ID))
+                        {
+                            await RegisteredEventHandlers[MessageDeletedEventHandler.EVENT_ID]
+                                .Handle(this, eventHandlerDefinition, context);
+                        }
                     }
                 }
             }
@@ -262,13 +405,18 @@ namespace CrackersBot.Web.Services
             }
         }
 
-        private async Task OnUserLeave(SocketGuild guild, SocketUser user)
+        private async Task OnUserLeft(SocketGuild socketGuild, SocketUser user)
         {
-            if (guild.Id == Zunderdome.ZUNDERDOME_DISCORD_GUILD_ID)
+            var context = new Dictionary<string, object>(){
+                { CommonNames.DISCORD_USER_ID, user.Id }
+            };
+
+            if (Guilds.TryGetValue(socketGuild.Id, out var guild))
             {
-                foreach (var handler in Zunderdome.UserLeaveEventHandlers)
+                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == UserLeftEventHandler.EVENT_ID))
                 {
-                    await handler.Handle(this, user);
+                    await RegisteredEventHandlers[UserLeftEventHandler.EVENT_ID]
+                        .Handle(this, eventHandlerDefinition, context);
                 }
             }
         }

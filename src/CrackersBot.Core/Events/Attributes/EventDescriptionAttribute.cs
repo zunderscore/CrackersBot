@@ -1,7 +1,7 @@
-namespace CrackersBot.Core.Actions
+namespace CrackersBot.Core.Events
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class ActionDescriptionAttribute(string description) : Attribute
+    public class EventDescriptionAttribute(string description) : Attribute
     {
         public string Description { get; } = description;
     }

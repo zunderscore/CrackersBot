@@ -15,6 +15,8 @@ namespace CrackersBot.Core
         public const string LIMIT = "Limit";
         public const string MESSAGE_TEXT = "MessageText";
         public const string REGISTERED_ACTION_COUNT = "RegisteredActionCount";
+        public const string REGISTERED_EVENT_HANDLER_COUNT = "RegisteredEventHandlerCount";
+        public const string REGISTERED_FILTER_COUNT = "RegisteredFilterCount";
         public const string REGISTERED_VARIABLE_COUNT = "RegisteredVariableCount";
     }
 }

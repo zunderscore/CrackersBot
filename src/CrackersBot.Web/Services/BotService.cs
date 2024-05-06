@@ -2,14 +2,9 @@ using CrackersBot.Core;
 
 namespace CrackersBot.Web.Services
 {
-    public class BotService : IHostedService
+    public class BotService(IBotCore bot) : IHostedService
     {
-        private BotCore _bot;
-
-        public BotService(IBotCore bot)
-        {
-            _bot = (BotCore)bot;
-        }
+        private readonly BotCore _bot = (BotCore)bot;
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {

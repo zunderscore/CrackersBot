@@ -1,14 +1,21 @@
 using CrackersBot.Core.Actions;
+using CrackersBot.Core.Events;
+using CrackersBot.Core.Filters;
 using CrackersBot.Core.Variables;
 using Discord;
+using System.Collections.Concurrent;
 
 namespace CrackersBot.Core
 {
     public interface IBotCore
     {
+        ConcurrentDictionary<ulong, GuildConfig> Guilds { get; }
+
         IDiscordClient DiscordClient { get; }
 
         // Actions
+
+        ConcurrentDictionary<string, IAction> RegisteredActions { get; }
 
         bool IsActionRegistered(string id);
 
@@ -16,9 +23,11 @@ namespace CrackersBot.Core
 
         void UnregisterAction(string id);
 
-        IAction GetRegisteredAction(string actionId);
+        IAction GetRegisteredAction(string id);
 
         // Variables
+
+        ConcurrentDictionary<string, IVariable> RegisteredVariables { get; }
 
         bool IsVariableRegistered(string token);
 
@@ -26,6 +35,24 @@ namespace CrackersBot.Core
 
         void UnregisterVariable(string token);
 
-        string ProcessVariables(string value, Dictionary<string, object> context);
+        // Event Handler
+
+        ConcurrentDictionary<string, IEventHandler> RegisteredEventHandlers { get; }
+
+        bool IsEventHandlerRegistered(string id);
+
+        void RegisterEventHandler(IEventHandler eventHandler);
+
+        void UnregisterEventHandler(string id);
+
+        // Filters
+
+        ConcurrentDictionary<string, IFilter> RegisteredFilters { get; }
+
+        bool IsFilterRegistered(string id);
+
+        void RegisterFilter(IFilter filter);
+
+        void UnregisterFilter(string id);
     }
 }
