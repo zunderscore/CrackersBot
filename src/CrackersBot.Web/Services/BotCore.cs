@@ -392,8 +392,8 @@ namespace CrackersBot.Web.Services
 
         private async Task OnPresenceUpdated(SocketUser user, SocketPresence oldPresence, SocketPresence newPresence)
         {
-            var wasStreaming = oldPresence.Activities.Any(a => a.Type == ActivityType.Streaming);
-            var isStreaming = newPresence.Activities.Any(a => a.Type == ActivityType.Streaming);
+            var wasStreaming = oldPresence?.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
+            var isStreaming = newPresence?.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
 
             var startedStreaming = !wasStreaming && isStreaming;
             var stoppedStreaming = wasStreaming && !isStreaming;
