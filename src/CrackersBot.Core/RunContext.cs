@@ -52,6 +52,13 @@ namespace CrackersBot.Core
             return this;
         }
 
+        public RunContext WithPreviousMessageText(string? messageText)
+        {
+            Metadata.TryAdd(CommonNames.PREVIOUS_MESSAGE_TEXT, messageText ?? String.Empty);
+
+            return this;
+        }
+
         public RunContext WithDiscordPresense(IPresence? presence)
         {
             if (presence is not null)

@@ -46,6 +46,7 @@ namespace CrackersBot.Web.Services
             _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
             _discordSocketClient.PresenceUpdated += OnPresenceUpdated;
             _discordSocketClient.MessageReceived += OnMessageReceived;
+            _discordSocketClient.MessageUpdated += OnMessageUpdated;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
             _discordSocketClient.UserLeft += OnUserLeft;
 
@@ -367,11 +368,14 @@ namespace CrackersBot.Web.Services
 
         private async Task OnBotStarted()
         {
+            Debug.WriteLine("OnBotStarted triggered");
+            var eventId = BotStartedEventHandler.EVENT_ID;
+
             foreach (var (_, guild) in Guilds)
             {
-                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == BotStartedEventHandler.EVENT_ID))
+                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
-                    await RegisteredEventHandlers[BotStartedEventHandler.EVENT_ID]
+                    await RegisteredEventHandlers[eventId]
                         .Handle(this, eventHandlerDefinition, new RunContext());
                 }
             }
@@ -379,6 +383,8 @@ namespace CrackersBot.Web.Services
 
         private async Task OnSlashCommandExecuted(SocketSlashCommand slashCommand)
         {
+            Debug.WriteLine("OnSlashCommandExecuted triggered");
+
             if (slashCommand.GuildId.HasValue
                 && Guilds.TryGetValue(slashCommand.GuildId.Value, out var guild))
             {
@@ -392,6 +398,9 @@ namespace CrackersBot.Web.Services
 
         private async Task OnPresenceUpdated(SocketUser user, SocketPresence oldPresence, SocketPresence newPresence)
         {
+            Debug.WriteLine("OnPresenceUpdated triggered");
+            var eventId = UserPresenceUpdatedEventHandler.EVENT_ID;
+
             var wasStreaming = oldPresence?.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
             var isStreaming = newPresence?.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
 
@@ -405,26 +414,30 @@ namespace CrackersBot.Web.Services
                     .WithDiscordUser(user)
                     .WithDiscordPresense(newPresence);
 
-                foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == UserPresenceUpdatedEventHandler.EVENT_ID))
+                foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                 {
-                    await RegisteredEventHandlers[UserPresenceUpdatedEventHandler.EVENT_ID]
+                    await RegisteredEventHandlers[eventId]
                         .Handle(this, eventDef, context);
                 }
 
                 if (startedStreaming)
                 {
-                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == UserStartedStreamingEventHandler.EVENT_ID))
+                    eventId = UserStartedStreamingEventHandler.EVENT_ID;
+
+                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                     {
-                        await RegisteredEventHandlers[UserStartedStreamingEventHandler.EVENT_ID]
+                        await RegisteredEventHandlers[eventId]
                             .Handle(this, eventDef, context);
                     }
                 }
 
                 if (stoppedStreaming)
                 {
-                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == UserStoppedStreamingEventHandler.EVENT_ID))
+                    eventId = UserStoppedStreamingEventHandler.EVENT_ID;
+
+                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                     {
-                        await RegisteredEventHandlers[UserStoppedStreamingEventHandler.EVENT_ID]
+                        await RegisteredEventHandlers[eventId]
                             .Handle(this, eventDef, context);
                     }
                 }
@@ -433,6 +446,9 @@ namespace CrackersBot.Web.Services
 
         private async Task OnMessageReceived(SocketMessage message)
         {
+            Debug.WriteLine("OnMessageReceived triggered");
+            var eventId = MessageReceivedEventHandler.EVENT_ID;
+
             if (message.Channel is SocketTextChannel textChannel)
             {
                 var context = new RunContext()
@@ -445,17 +461,54 @@ namespace CrackersBot.Web.Services
 
                 if (Guilds.TryGetValue(guildId, out var guild))
                 {
-                    foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == MessageReceivedEventHandler.EVENT_ID))
+                    foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
                     {
-                        await RegisteredEventHandlers[MessageReceivedEventHandler.EVENT_ID]
+                        await RegisteredEventHandlers[eventId]
                             .Handle(this, eventHandlerDefinition, context);
                     }
                 }
             }
         }
 
+        private async Task OnMessageUpdated(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        {
+            Debug.WriteLine("OnMessageUpdated triggered");
+            var eventId = MessageUpdatedEventHandler.EVENT_ID;
+
+            if (oldMessage.HasValue)
+            {
+                if (channel is ITextChannel textChannel)
+                {
+                    var context = new RunContext()
+                        .WithDiscordGuild(textChannel.Guild)
+                        .WithDiscordUser(newMessage.Author)
+                        .WithDiscordChannel(channel)
+                        .WithDiscordMessage(newMessage)
+                        .WithPreviousMessageText(oldMessage.Value.ToString());
+
+                    var guildId = textChannel.Guild.Id;
+
+                    if (Guilds.TryGetValue(guildId, out var guild))
+                    {
+                        foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
+                        {
+                            await RegisteredEventHandlers[eventId]
+                                .Handle(this, eventHandlerDefinition, context);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                Debug.WriteLine("Unable to retrieve original contents of edited message from cache; skipping events");
+            }
+        }
+
         private async Task OnMessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
+            Debug.WriteLine("OnMessageDeleted triggered");
+            var eventId = MessageDeletedEventHandler.EVENT_ID;
+
             if (message.HasValue && channel.HasValue)
             {
                 if (channel.Value is ITextChannel textChannel)
@@ -470,9 +523,9 @@ namespace CrackersBot.Web.Services
 
                     if (Guilds.TryGetValue(guildId, out var guild))
                     {
-                        foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == MessageDeletedEventHandler.EVENT_ID))
+                        foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
-                            await RegisteredEventHandlers[MessageDeletedEventHandler.EVENT_ID]
+                            await RegisteredEventHandlers[eventId]
                                 .Handle(this, eventHandlerDefinition, context);
                         }
                     }
@@ -486,15 +539,18 @@ namespace CrackersBot.Web.Services
 
         private async Task OnUserLeft(SocketGuild socketGuild, SocketUser user)
         {
+            Debug.WriteLine($"OnUserLeft triggered. Guild: {socketGuild.Name} ({socketGuild.Id}). User: {user.Username} ({user.Id})");
+            var eventId = UserLeftEventHandler.EVENT_ID;
+
             var context = new RunContext()
                 .WithDiscordGuild(socketGuild)
                 .WithDiscordUser(user);
 
             if (Guilds.TryGetValue(socketGuild.Id, out var guild))
             {
-                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == UserLeftEventHandler.EVENT_ID))
+                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
-                    await RegisteredEventHandlers[UserLeftEventHandler.EVENT_ID]
+                    await RegisteredEventHandlers[eventId]
                         .Handle(this, eventHandlerDefinition, context);
                 }
             }
