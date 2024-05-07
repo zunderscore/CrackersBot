@@ -15,7 +15,7 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.LIMIT, new UInt16ParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context)
+        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
         {
             ushort limit = 100;
             if (parameters.TryGetValue(CommonNames.LIMIT, out object? value) && value is ushort)

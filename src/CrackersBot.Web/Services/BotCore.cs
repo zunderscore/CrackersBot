@@ -371,20 +371,17 @@ namespace CrackersBot.Web.Services
                 foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == BotStartedEventHandler.EVENT_ID))
                 {
                     await RegisteredEventHandlers[BotStartedEventHandler.EVENT_ID]
-                        .Handle(this, eventHandlerDefinition);
+                        .Handle(this, eventHandlerDefinition, new RunContext());
                 }
             }
         }
 
         private async Task OnMessageReceived(SocketMessage message)
         {
-            var context = new Dictionary<string, object>()
-            {
-                { CommonNames.DISCORD_AUTHOR_ID, message.Author.Id },
-                { CommonNames.DISCORD_CHANNEL_ID, message.Channel.Id },
-                { CommonNames.DISCORD_MESSAGE_ID, message.Id },
-                { CommonNames.MESSAGE_TEXT, message.ToString() ?? String.Empty }
-            };
+            var context = new RunContext()
+                .WithDiscordUser(message.Author)
+                .WithDiscordChannel(message.Channel)
+                .WithDiscordMessage(message);
 
             if (message.Channel is SocketTextChannel textChannel)
             {
@@ -403,15 +400,12 @@ namespace CrackersBot.Web.Services
 
         private async Task OnMessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
         {
-            if (message.HasValue)
+            if (message.HasValue && channel.HasValue)
             {
-                var context = new Dictionary<string, object>()
-                {
-                    { CommonNames.DISCORD_AUTHOR_ID, message.Value.Author?.Id ?? 0 },
-                    { CommonNames.DISCORD_CHANNEL_ID, channel.Id },
-                    { CommonNames.DISCORD_MESSAGE_ID, message.Id },
-                    { CommonNames.MESSAGE_TEXT, message.Value.ToString() ?? String.Empty }
-                };
+                var context = new RunContext()
+                    .WithDiscordUser(message.Value.Author)
+                    .WithDiscordChannel(channel.Value)
+                    .WithDiscordMessage(message.Value);
 
                 if (message.Value.Channel is ITextChannel textChannel)
                 {
@@ -435,9 +429,8 @@ namespace CrackersBot.Web.Services
 
         private async Task OnUserLeft(SocketGuild socketGuild, SocketUser user)
         {
-            var context = new Dictionary<string, object>(){
-                { CommonNames.DISCORD_USER_ID, user.Id }
-            };
+            var context = new RunContext()
+                .WithDiscordUser(user);
 
             if (Guilds.TryGetValue(socketGuild.Id, out var guild))
             {
@@ -451,7 +444,7 @@ namespace CrackersBot.Web.Services
 
         private async Task OnSlashCommandExecuted(SocketSlashCommand slashCommand)
         {
-            if (slashCommand.GuildId is not null
+            if (slashCommand.GuildId.HasValue
                 && Guilds.TryGetValue(slashCommand.GuildId.Value, out var guild))
             {
                 var commandHandler = guild.Commands.FirstOrDefault(h => h.Name == slashCommand.CommandName);

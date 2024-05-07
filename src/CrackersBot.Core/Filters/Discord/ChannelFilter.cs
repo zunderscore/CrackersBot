@@ -18,7 +18,7 @@ namespace CrackersBot.Core.Filters.Discord
         };
 
         public override bool Pass(
-            Dictionary<string, object> parameters,
+            RunContext context,
             Dictionary<string, string>? rawConditions = null,
             FilterInclusionType inclusionType = FilterInclusionType.Include)
         {
@@ -32,8 +32,8 @@ namespace CrackersBot.Core.Filters.Discord
                 return false;
             }
 
-            if (!parameters.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out object? channelIdParamObj)
-                || channelIdParamObj is not ulong channelIdParam)
+            if (!context.Metadata.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out string? channelIdParamString)
+                || !UInt64.TryParse(channelIdParamString, out var channelIdParam))
             {
                 return false;
             }

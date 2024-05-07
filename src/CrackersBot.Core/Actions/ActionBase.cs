@@ -16,7 +16,7 @@ namespace CrackersBot.Core.Actions
             return bot?.DiscordClient is not null && ValidateParameters(rawParams);
         }
 
-        public abstract Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context);
+        public abstract Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context);
 
         public virtual bool ValidateParameters(Dictionary<string, string> rawParams)
             => ParameterHelpers.ValidateParameters(ActionParameters, rawParams);

@@ -12,19 +12,19 @@ namespace CrackersBot.Core.Events
             IBotCore bot,
             IEnumerable<FilterDefinition> filterDefinitions,
             FilterMode filterMode,
-            Dictionary<string, object> context
+            RunContext context
         );
 
         public virtual Task Handle(
             IBotCore bot,
             EventHandlerDefinition definition,
-            Dictionary<string, object>? context = null
+            RunContext context
         ) => Handle(bot, definition.Actions, context, definition.Filters, definition.FilterMode);
 
         Task Handle(
             IBotCore bot,
             List<KeyValuePair<string, Dictionary<string, string>>> actions,
-            Dictionary<string, object>? context = null,
+            RunContext context,
             IEnumerable<FilterDefinition>? filters = null,
             FilterMode filterMode = FilterMode.All
         );
@@ -32,7 +32,7 @@ namespace CrackersBot.Core.Events
         Task RunActions(
             IBotCore bot,
             List<KeyValuePair<string, Dictionary<string, string>>> actions,
-            Dictionary<string, object> context
+            RunContext context
         );
     }
 }

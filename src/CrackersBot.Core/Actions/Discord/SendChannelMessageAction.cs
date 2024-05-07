@@ -28,7 +28,7 @@ namespace CrackersBot.Core.Actions.Discord
                 && (hasMessage || hasEmbed);
         }
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context)
+        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
         {
             var channel = await bot.DiscordClient.GetChannelAsync((ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]);
 
@@ -41,7 +41,7 @@ namespace CrackersBot.Core.Actions.Discord
                 var embed = parameters[CommonNames.DISCORD_EMBED] as EmbedDefinition;
 
                 await textChannel.SendMessageAsync(message,
-                    embed: embed?.BuildDiscordEmbed(bot, parameters));
+                    embed: embed?.BuildDiscordEmbed(bot, context));
             }
         }
     }

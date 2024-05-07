@@ -18,12 +18,9 @@ namespace CrackersBot.Core.Commands
 
         public async Task RunActions(IBotCore bot, SocketSlashCommand slashCommand)
         {
-            var context = new Dictionary<string, object>()
-            {
-                { CommonNames.DISCORD_USER_ID, slashCommand.User.Id },
-                { CommonNames.DISCORD_USER_NAME, slashCommand.User.Username },
-                { CommonNames.DISCORD_USER_AVATAR_URL, slashCommand.User.GetAvatarUrl() },
-            };
+            var context = new RunContext()
+                .WithDiscordUser(slashCommand.User)
+                .WithDiscordChannel(slashCommand.Channel);
 
             await ActionRunner.RunActions(bot, Actions, context);
             await slashCommand.RespondAsync(

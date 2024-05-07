@@ -21,16 +21,14 @@ namespace CrackersBot.Core.Variables
             return tokens.ToList();
         }
 
-        public static string GetValue(string token, Dictionary<string, object> context)
+        public static string GetValue(string token, RunContext context)
         {
-            return context.TryGetValue(token, out object? valueObj) && valueObj is string value
+            return context.Metadata.TryGetValue(token, out string? value)
                 ? value ?? String.Empty
-                : valueObj is null
-                    ? String.Empty
-                    : valueObj.ToString() ?? String.Empty;
+                : String.Empty;
         }
 
-        public static string ProcessVariables(IBotCore bot, string? value, Dictionary<string, object> context)
+        public static string ProcessVariables(IBotCore bot, string? value, RunContext context)
         {
             if (value is null) return String.Empty;
 

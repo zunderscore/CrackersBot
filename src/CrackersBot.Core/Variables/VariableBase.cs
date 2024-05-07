@@ -7,7 +7,7 @@ namespace CrackersBot.Core.Variables
     {
         public string Token => GetType().GetCustomAttribute<VariableTokenAttribute>()?.Token ?? String.Empty;
 
-        public virtual string GetValue(IBotCore bot, Dictionary<string, object> context)
+        public virtual string GetValue(IBotCore bot, RunContext context)
         {
             return DefaultVariableProcessor.GetValue(Token, context);
         }

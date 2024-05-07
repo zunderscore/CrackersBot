@@ -17,7 +17,7 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.DISCORD_EMOTE_NAME, new StringParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context)
+        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
         {
             if (!parameters.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out object? channelId) || !parameters.TryGetValue(CommonNames.DISCORD_MESSAGE_ID, out object? messageId)) return;
 

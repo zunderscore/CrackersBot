@@ -13,7 +13,7 @@ namespace CrackersBot.Core.Commands
         public IEnumerable<EmbedDefinition>? Embeds { get; } = embeds;
         public bool Ephemeral { get; } = ephemeral;
 
-        public IEnumerable<Embed>? GetParsedEmbeds(IBotCore bot, Dictionary<string, object> context)
+        public IEnumerable<Embed>? GetParsedEmbeds(IBotCore bot, RunContext context)
             => Embeds?.Select(e => e.BuildDiscordEmbed(bot, context));
     }
 }

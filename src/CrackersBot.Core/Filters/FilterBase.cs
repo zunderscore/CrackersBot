@@ -17,7 +17,7 @@ namespace CrackersBot.Core.Filters
             => ParameterHelpers.ValidateParameters(FilterParameters, rawParams);
 
         public abstract bool Pass(
-            Dictionary<string, object> parameters,
+            RunContext context,
             Dictionary<string, string>? rawConditions = null,
             FilterInclusionType inclusionType = FilterInclusionType.Include
         );

@@ -8,7 +8,7 @@ namespace CrackersBot.Core.Actions
         public static async Task RunActions(
             IBotCore bot,
             List<KeyValuePair<string, Dictionary<string, string>>> actions,
-            Dictionary<string, object> context
+            RunContext context
         )
         {
             foreach (var (actionType, parameters) in actions)

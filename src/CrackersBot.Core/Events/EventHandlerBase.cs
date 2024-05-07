@@ -13,21 +13,21 @@ namespace CrackersBot.Core.Events
         public virtual async Task Handle(
             IBotCore bot,
             List<KeyValuePair<string, Dictionary<string, string>>> actions,
-            Dictionary<string, object>? context = null,
+            RunContext context,
             IEnumerable<FilterDefinition>? filters = null,
             FilterMode filterMode = FilterMode.All
         )
         {
-            if (!CheckFilters(bot, filters ?? [], filterMode, context ?? [])) return;
+            if (!CheckFilters(bot, filters ?? [], filterMode, context)) return;
 
-            await RunActions(bot, actions, context ?? []);
+            await RunActions(bot, actions, context);
         }
 
         public bool CheckFilters(
             IBotCore bot,
             IEnumerable<FilterDefinition> filterDefinitions,
             FilterMode filterMode,
-            Dictionary<string, object> context
+            RunContext context
         )
         {
             var filterPass = false;
@@ -59,7 +59,7 @@ namespace CrackersBot.Core.Events
         public async Task RunActions(
             IBotCore bot,
             List<KeyValuePair<string, Dictionary<string, string>>> actions,
-            Dictionary<string, object> context
+            RunContext context
         ) => await ActionRunner.RunActions(bot, actions, context);
     }
 }

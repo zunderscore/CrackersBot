@@ -15,9 +15,12 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.MESSAGE_TEXT, new StringParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context)
+        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
         {
-            var user = await bot.DiscordClient.GetUserAsync((ulong)parameters[CommonNames.DISCORD_USER_ID]);
+            var userId = (ulong)parameters[CommonNames.DISCORD_USER_ID];
+            var user = await bot.DiscordClient.GetUserAsync(userId);
+
+            await user.CreateDMChannelAsync();
             await user.SendMessageAsync((string)parameters[CommonNames.MESSAGE_TEXT]);
         }
     }

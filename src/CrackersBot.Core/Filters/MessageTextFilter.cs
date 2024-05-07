@@ -1,14 +1,14 @@
-using System.Text.RegularExpressions;
 using CrackersBot.Core.Parameters;
+using System.Text.RegularExpressions;
 
-namespace CrackersBot.Core.Filters.Discord
+namespace CrackersBot.Core.Filters
 {
     [FilterId(FILTER_ID)]
-    [FilterName("Discord Message")]
-    [FilterDescription("The contents of a Discord message")]
-    public class MessageFilter : FilterBase
+    [FilterName("Message Text")]
+    [FilterDescription("The contents of a message")]
+    public class MessageTextFilter : FilterBase
     {
-        public const string FILTER_ID = "CrackersBot.Discord.Message";
+        public const string FILTER_ID = "CrackersBot.MessageText";
 
         public const string CONDITION_FILTER_TEXT = "FilterText";
         public const string CONDITION_IS_CASE_SENSITIVE = "IsCaseSensitive";
@@ -25,7 +25,7 @@ namespace CrackersBot.Core.Filters.Discord
         };
 
         public override bool Pass(
-            Dictionary<string, object> parameters,
+            RunContext context,
             Dictionary<string, string>? rawConditions = null,
             FilterInclusionType inclusionType = FilterInclusionType.Include
         )
@@ -43,7 +43,7 @@ namespace CrackersBot.Core.Filters.Discord
                 && caseSensitiveVal;
 
             bool isMatch;
-            var message = parameters.TryGetValue(CommonNames.MESSAGE_TEXT, out object? messageTextObj) && messageTextObj is string messageText
+            var message = context.Metadata.TryGetValue(CommonNames.MESSAGE_TEXT, out string? messageText)
                 ? messageText ?? String.Empty
                 : String.Empty;
 

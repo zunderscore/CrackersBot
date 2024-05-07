@@ -4,7 +4,7 @@ namespace CrackersBot.Core.Variables.Bot
     [VariableDescription("The total number of filters registered in CrackersBot")]
     public class RegisteredFilterCountVariable : VariableBase
     {
-        public override string GetValue(IBotCore bot, Dictionary<string, object> context)
+        public override string GetValue(IBotCore bot, RunContext context)
             => bot.RegisteredFilters.Count.ToString();
     }
 }
