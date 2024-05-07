@@ -19,6 +19,17 @@ namespace CrackersBot.Core
             return this;
         }
 
+        public RunContext WithDiscordGuild(IGuild? guild)
+        {
+            if (guild is not null)
+            {
+                Metadata.TryAdd(CommonNames.DISCORD_GUILD_ID, guild.Id.ToString());
+                Metadata.TryAdd(CommonNames.DISCORD_GUILD_NAME, guild.Name);
+            }
+
+            return this;
+        }
+
         public RunContext WithDiscordChannel(IChannel? channel)
         {
             if (channel is not null)
@@ -36,6 +47,16 @@ namespace CrackersBot.Core
             {
                 Metadata.TryAdd(CommonNames.DISCORD_MESSAGE_ID, message.Id.ToString());
                 Metadata.TryAdd(CommonNames.MESSAGE_TEXT, message.ToString() ?? String.Empty);
+            }
+
+            return this;
+        }
+
+        public RunContext WithDiscordPresense(IPresence? presence)
+        {
+            if (presence is not null)
+            {
+                Metadata.TryAdd(CommonNames.IS_STREAMING, presence.Activities.Any(a => a.Type == ActivityType.Streaming).ToString());
             }
 
             return this;

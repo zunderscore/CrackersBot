@@ -21,7 +21,7 @@ namespace CrackersBot.Core.Actions.Discord
         {
             if (!parameters.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out object? channelId) || !parameters.TryGetValue(CommonNames.DISCORD_MESSAGE_ID, out object? messageId)) return;
 
-            var guild = await bot.DiscordClient.GetGuildAsync((ulong)parameters[CommonNames.DISCORD_GUILD_ID]);
+            var guild = await bot.DiscordClient.Rest.GetGuildAsync((ulong)parameters[CommonNames.DISCORD_GUILD_ID]);
             var emote = (await guild.GetEmotesAsync())
                 .FirstOrDefault(e => e.Name.Equals((string)parameters[CommonNames.DISCORD_EMOTE_NAME], StringComparison.CurrentCultureIgnoreCase));
 

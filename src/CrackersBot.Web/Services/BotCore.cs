@@ -27,7 +27,7 @@ namespace CrackersBot.Web.Services
             });
         }
 
-        public IDiscordClient DiscordClient => _discordSocketClient;
+        public DiscordSocketClient DiscordClient => _discordSocketClient;
 
         public ConcurrentDictionary<ulong, GuildConfig> Guilds { get; } = new();
 
@@ -43,10 +43,11 @@ namespace CrackersBot.Web.Services
             await LoadGuildConfigs();
 
             _discordSocketClient.Ready += ClientReady;
+            _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
+            _discordSocketClient.PresenceUpdated += OnPresenceUpdated;
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
             _discordSocketClient.UserLeft += OnUserLeft;
-            _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
 
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
@@ -376,15 +377,70 @@ namespace CrackersBot.Web.Services
             }
         }
 
+        private async Task OnSlashCommandExecuted(SocketSlashCommand slashCommand)
+        {
+            if (slashCommand.GuildId.HasValue
+                && Guilds.TryGetValue(slashCommand.GuildId.Value, out var guild))
+            {
+                var commandHandler = guild.Commands.FirstOrDefault(h => h.Name == slashCommand.CommandName);
+                if (commandHandler is not null)
+                {
+                    await commandHandler.RunActions(this, slashCommand);
+                }
+            }
+        }
+
+        private async Task OnPresenceUpdated(SocketUser user, SocketPresence oldPresence, SocketPresence newPresence)
+        {
+            var wasStreaming = oldPresence.Activities.Any(a => a.Type == ActivityType.Streaming);
+            var isStreaming = newPresence.Activities.Any(a => a.Type == ActivityType.Streaming);
+
+            var startedStreaming = !wasStreaming && isStreaming;
+            var stoppedStreaming = wasStreaming && !isStreaming;
+
+            foreach (var (guildId, guild) in Guilds)
+            {
+                var context = new RunContext()
+                    .WithDiscordGuild(_discordSocketClient.GetGuild(guildId))
+                    .WithDiscordUser(user)
+                    .WithDiscordPresense(newPresence);
+
+                foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == UserPresenceUpdatedEventHandler.EVENT_ID))
+                {
+                    await RegisteredEventHandlers[UserPresenceUpdatedEventHandler.EVENT_ID]
+                        .Handle(this, eventDef, context);
+                }
+
+                if (startedStreaming)
+                {
+                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == UserStartedStreamingEventHandler.EVENT_ID))
+                    {
+                        await RegisteredEventHandlers[UserStartedStreamingEventHandler.EVENT_ID]
+                            .Handle(this, eventDef, context);
+                    }
+                }
+
+                if (stoppedStreaming)
+                {
+                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == UserStoppedStreamingEventHandler.EVENT_ID))
+                    {
+                        await RegisteredEventHandlers[UserStoppedStreamingEventHandler.EVENT_ID]
+                            .Handle(this, eventDef, context);
+                    }
+                }
+            }
+        }
+
         private async Task OnMessageReceived(SocketMessage message)
         {
-            var context = new RunContext()
-                .WithDiscordUser(message.Author)
-                .WithDiscordChannel(message.Channel)
-                .WithDiscordMessage(message);
-
             if (message.Channel is SocketTextChannel textChannel)
             {
+                var context = new RunContext()
+                    .WithDiscordGuild(textChannel.Guild)
+                    .WithDiscordUser(message.Author)
+                    .WithDiscordChannel(message.Channel)
+                    .WithDiscordMessage(message);
+
                 var guildId = textChannel.Guild.Id;
 
                 if (Guilds.TryGetValue(guildId, out var guild))
@@ -402,13 +458,14 @@ namespace CrackersBot.Web.Services
         {
             if (message.HasValue && channel.HasValue)
             {
-                var context = new RunContext()
-                    .WithDiscordUser(message.Value.Author)
-                    .WithDiscordChannel(channel.Value)
-                    .WithDiscordMessage(message.Value);
-
-                if (message.Value.Channel is ITextChannel textChannel)
+                if (channel.Value is ITextChannel textChannel)
                 {
+                    var context = new RunContext()
+                        .WithDiscordGuild(textChannel.Guild)
+                        .WithDiscordUser(message.Value.Author)
+                        .WithDiscordChannel(channel.Value)
+                        .WithDiscordMessage(message.Value);
+
                     var guildId = textChannel.Guild.Id;
 
                     if (Guilds.TryGetValue(guildId, out var guild))
@@ -430,6 +487,7 @@ namespace CrackersBot.Web.Services
         private async Task OnUserLeft(SocketGuild socketGuild, SocketUser user)
         {
             var context = new RunContext()
+                .WithDiscordGuild(socketGuild)
                 .WithDiscordUser(user);
 
             if (Guilds.TryGetValue(socketGuild.Id, out var guild))
@@ -438,19 +496,6 @@ namespace CrackersBot.Web.Services
                 {
                     await RegisteredEventHandlers[UserLeftEventHandler.EVENT_ID]
                         .Handle(this, eventHandlerDefinition, context);
-                }
-            }
-        }
-
-        private async Task OnSlashCommandExecuted(SocketSlashCommand slashCommand)
-        {
-            if (slashCommand.GuildId.HasValue
-                && Guilds.TryGetValue(slashCommand.GuildId.Value, out var guild))
-            {
-                var commandHandler = guild.Commands.FirstOrDefault(h => h.Name == slashCommand.CommandName);
-                if (commandHandler is not null)
-                {
-                    await commandHandler.RunActions(this, slashCommand);
                 }
             }
         }

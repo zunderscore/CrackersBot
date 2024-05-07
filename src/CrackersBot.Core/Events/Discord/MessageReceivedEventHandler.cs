@@ -1,6 +1,3 @@
-using CrackersBot.Core.Filters;
-using Discord;
-
 namespace CrackersBot.Core.Events.Discord
 {
     [EventId(EVENT_ID)]

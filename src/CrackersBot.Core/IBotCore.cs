@@ -2,7 +2,7 @@ using CrackersBot.Core.Actions;
 using CrackersBot.Core.Events;
 using CrackersBot.Core.Filters;
 using CrackersBot.Core.Variables;
-using Discord;
+using Discord.WebSocket;
 using System.Collections.Concurrent;
 
 namespace CrackersBot.Core
@@ -11,7 +11,7 @@ namespace CrackersBot.Core
     {
         ConcurrentDictionary<ulong, GuildConfig> Guilds { get; }
 
-        IDiscordClient DiscordClient { get; }
+        DiscordSocketClient DiscordClient { get; }
 
         // Actions
 
