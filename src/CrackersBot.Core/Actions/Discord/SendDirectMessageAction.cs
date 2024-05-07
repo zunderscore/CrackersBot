@@ -15,7 +15,7 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.MESSAGE_TEXT, new StringParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters)
+        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context)
         {
             var user = await bot.DiscordClient.GetUserAsync((ulong)parameters[CommonNames.DISCORD_USER_ID]);
             await user.SendMessageAsync((string)parameters[CommonNames.MESSAGE_TEXT]);

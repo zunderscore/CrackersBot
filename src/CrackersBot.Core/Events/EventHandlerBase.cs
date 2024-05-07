@@ -1,6 +1,5 @@
+using CrackersBot.Core.Actions;
 using CrackersBot.Core.Filters;
-using CrackersBot.Core.Parameters;
-using CrackersBot.Core.Variables;
 using System.Reflection;
 
 namespace CrackersBot.Core.Events
@@ -13,7 +12,7 @@ namespace CrackersBot.Core.Events
 
         public virtual async Task Handle(
             IBotCore bot,
-            Dictionary<string, Dictionary<string, string>> actions,
+            List<KeyValuePair<string, Dictionary<string, string>>> actions,
             Dictionary<string, object>? context = null,
             IEnumerable<FilterDefinition>? filters = null,
             FilterMode filterMode = FilterMode.All
@@ -59,32 +58,8 @@ namespace CrackersBot.Core.Events
 
         public async Task RunActions(
             IBotCore bot,
-            Dictionary<string, Dictionary<string, string>> actions,
+            List<KeyValuePair<string, Dictionary<string, string>>> actions,
             Dictionary<string, object> context
-        )
-        {
-            foreach (var (actionType, parameters) in actions)
-            {
-                try
-                {
-                    var processedParams = new Dictionary<string, string>();
-                    foreach (var (paramName, paramValue) in parameters)
-                    {
-                        processedParams.Add(paramName, DefaultVariableProcessor.ProcessVariables(bot, paramValue, context));
-                    }
-
-                    var action = bot.GetRegisteredAction(actionType);
-                    if (action.DoPreRunCheck(bot, processedParams))
-                    {
-                        var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
-                        await action.Run(bot, parsedParams);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex);
-                }
-            }
-        }
+        ) => await ActionRunner.RunActions(bot, actions, context);
     }
 }

@@ -23,7 +23,7 @@ namespace CrackersBot.Core.Events
 
         Task Handle(
             IBotCore bot,
-            Dictionary<string, Dictionary<string, string>> actions,
+            List<KeyValuePair<string, Dictionary<string, string>>> actions,
             Dictionary<string, object>? context = null,
             IEnumerable<FilterDefinition>? filters = null,
             FilterMode filterMode = FilterMode.All
@@ -31,7 +31,7 @@ namespace CrackersBot.Core.Events
 
         Task RunActions(
             IBotCore bot,
-            Dictionary<string, Dictionary<string, string>> actions,
+            List<KeyValuePair<string, Dictionary<string, string>>> actions,
             Dictionary<string, object> context
         );
     }

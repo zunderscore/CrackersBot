@@ -1,10 +1,14 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace CrackersBot.Core.Variables
 {
     public static partial class DefaultVariableProcessor
     {
+        [GeneratedRegex(@"\{{(\w+)}}")]
+        public static partial Regex TokenRegex();
+
         public static List<string> GetVariableTokens(string value)
         {
             var tokenRegex = TokenRegex();
@@ -26,8 +30,10 @@ namespace CrackersBot.Core.Variables
                     : valueObj.ToString() ?? String.Empty;
         }
 
-        public static string ProcessVariables(IBotCore bot, string value, Dictionary<string, object> context)
+        public static string ProcessVariables(IBotCore bot, string? value, Dictionary<string, object> context)
         {
+            if (value is null) return String.Empty;
+
             foreach (var token in GetVariableTokens(value))
             {
                 Debug.WriteLine($"Token: {token}");
@@ -40,8 +46,5 @@ namespace CrackersBot.Core.Variables
 
             return value;
         }
-
-        [GeneratedRegex(@"\{{(\w+)}}")]
-        public static partial Regex TokenRegex();
     }
 }

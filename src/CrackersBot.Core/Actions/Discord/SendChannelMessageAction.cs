@@ -13,7 +13,7 @@ namespace CrackersBot.Core.Actions.Discord
         public override Dictionary<string, IParameterType> ActionParameters => new() {
             { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() },
             { CommonNames.MESSAGE_TEXT, new StringParameterType(true) },
-            { CommonNames.DISCORD_EMBED, new ObjectParameterType(typeof(Embed), true) }
+            { CommonNames.DISCORD_EMBED, new ObjectParameterType(typeof(EmbedDefinition), true) }
         };
 
         public override bool ValidateParameters(Dictionary<string, string> parameters)
@@ -28,7 +28,7 @@ namespace CrackersBot.Core.Actions.Discord
                 && (hasMessage || hasEmbed);
         }
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters)
+        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context)
         {
             var channel = await bot.DiscordClient.GetChannelAsync((ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]);
 
@@ -38,10 +38,10 @@ namespace CrackersBot.Core.Actions.Discord
                     ? String.Empty
                     : value.ToString() ?? String.Empty;
 
-                var embed = parameters[CommonNames.DISCORD_EMBED] as Embed;
+                var embed = parameters[CommonNames.DISCORD_EMBED] as EmbedDefinition;
 
                 await textChannel.SendMessageAsync(message,
-                    embed: embed?.BuildDiscordEmbed(bot));
+                    embed: embed?.BuildDiscordEmbed(bot, parameters));
             }
         }
     }

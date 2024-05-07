@@ -14,6 +14,6 @@ namespace CrackersBot.Core.Actions
 
         bool DoPreRunCheck(IBotCore bot, Dictionary<string, string> rawParams);
 
-        Task Run(IBotCore bot, Dictionary<string, object> parameters);
+        Task Run(IBotCore bot, Dictionary<string, object> parameters, Dictionary<string, object> context);
     }
 }

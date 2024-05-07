@@ -10,6 +10,8 @@ namespace CrackersBot.Core
         public const string DISCORD_GUILD_ID = "DiscordGuildId";
         public const string DISCORD_MESSAGE_ID = "DiscordMessageId";
         public const string DISCORD_USER_ID = "DiscordUserId";
+        public const string DISCORD_USER_NAME = "DiscordUserName";
+        public const string DISCORD_USER_AVATAR_URL = "DiscordUserAvatarUrl";
         public const string EVENTS = "Events";
         public const string FILTERS = "Filters";
         public const string LIMIT = "Limit";

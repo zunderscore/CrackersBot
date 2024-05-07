@@ -46,6 +46,7 @@ namespace CrackersBot.Web.Services
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
             _discordSocketClient.UserLeft += OnUserLeft;
+            _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
 
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
@@ -81,6 +82,32 @@ namespace CrackersBot.Web.Services
             catch (Exception ex)
             {
                 Debug.WriteLine(ex.Message);
+            }
+        }
+
+        internal async Task RegisterCommands()
+        {
+            foreach (var (guildId, guild) in Guilds)
+            {
+                foreach (var command in guild.Commands)
+                {
+                    var commandBuilder = new SlashCommandBuilder();
+                    try
+                    {
+                        var socketGuild = _discordSocketClient.GetGuild(guildId);
+                        if (socketGuild is not null)
+                        {
+                            await socketGuild.CreateApplicationCommandAsync(commandBuilder
+                                .WithName(command.Name)
+                                .WithDescription(command.Description)
+                                .Build());
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.WriteLine($"Unable to create command {command.Name}: {ex.Message}");
+                    }
+                }
             }
         }
 
@@ -331,6 +358,7 @@ namespace CrackersBot.Web.Services
         private async Task ClientReady()
         {
             await Task.Run(() => Debug.WriteLine("Client ready!"));
+            await RegisterCommands();
             return;
         }
 
@@ -417,6 +445,19 @@ namespace CrackersBot.Web.Services
                 {
                     await RegisteredEventHandlers[UserLeftEventHandler.EVENT_ID]
                         .Handle(this, eventHandlerDefinition, context);
+                }
+            }
+        }
+
+        private async Task OnSlashCommandExecuted(SocketSlashCommand slashCommand)
+        {
+            if (slashCommand.GuildId is not null
+                && Guilds.TryGetValue(slashCommand.GuildId.Value, out var guild))
+            {
+                var commandHandler = guild.Commands.FirstOrDefault(h => h.Name == slashCommand.CommandName);
+                if (commandHandler is not null)
+                {
+                    await commandHandler.RunActions(this, slashCommand);
                 }
             }
         }
