@@ -23,7 +23,7 @@ namespace CrackersBot.Core.Actions.Discord
                 var guildId = (ulong)parameters[CommonNames.DISCORD_GUILD_ID];
                 var roleId = (ulong)parameters[CommonNames.DISCORD_ROLE_ID];
 
-                await bot.DiscordClient.Rest.AddRoleAsync(guildId, userId, roleId);
+                await bot.DiscordClient.GetGuild(guildId).GetUser(userId).AddRoleAsync(roleId);
             }
             finally { }
         }
