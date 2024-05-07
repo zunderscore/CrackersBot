@@ -16,6 +16,7 @@ namespace CrackersBot.Core
         public const string DISCORD_USER_AVATAR_URL = "DiscordUserAvatarUrl";
         public const string EVENTS = "Events";
         public const string FILTERS = "Filters";
+        public const string GAME_NAME = "GameName";
         public const string IS_BOT = "IsBot";
         public const string IS_STREAMING = "IsStreaming";
         public const string LIMIT = "Limit";
@@ -25,5 +26,7 @@ namespace CrackersBot.Core
         public const string REGISTERED_EVENT_HANDLER_COUNT = "RegisteredEventHandlerCount";
         public const string REGISTERED_FILTER_COUNT = "RegisteredFilterCount";
         public const string REGISTERED_VARIABLE_COUNT = "RegisteredVariableCount";
+        public const string STREAM_TITLE = "StreamTitle";
+        public const string STREAM_URL = "StreamUrl";
     }
 }

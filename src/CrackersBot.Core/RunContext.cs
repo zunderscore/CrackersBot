@@ -63,7 +63,18 @@ namespace CrackersBot.Core
         {
             if (presence is not null)
             {
-                Metadata.TryAdd(CommonNames.IS_STREAMING, presence.Activities.Any(a => a.Type == ActivityType.Streaming).ToString());
+                var isStreaming = presence.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
+
+                Metadata.TryAdd(CommonNames.IS_STREAMING, isStreaming.ToString());
+
+                if (isStreaming)
+                {
+                    var streamingActivity = presence.Activities!.First(a => a.Type == ActivityType.Streaming) as StreamingGame;
+
+                    Metadata.TryAdd(CommonNames.STREAM_URL, streamingActivity!.Url.ToString());
+                    Metadata.TryAdd(CommonNames.STREAM_TITLE, streamingActivity!.Details.ToString());
+                    Metadata.TryAdd(CommonNames.GAME_NAME, streamingActivity!.Name.ToString());
+                }
             }
 
             return this;
