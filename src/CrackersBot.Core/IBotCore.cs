@@ -9,9 +9,11 @@ namespace CrackersBot.Core
 {
     public interface IBotCore
     {
+        DiscordSocketClient DiscordClient { get; }
+
         ConcurrentDictionary<ulong, GuildConfig> Guilds { get; }
 
-        DiscordSocketClient DiscordClient { get; }
+        Task LoadGuildConfigs();
 
         // Actions
 

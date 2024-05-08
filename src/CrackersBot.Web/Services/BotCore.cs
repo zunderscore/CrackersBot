@@ -64,7 +64,7 @@ namespace CrackersBot.Web.Services
             await _discordSocketClient.DisposeAsync();
         }
 
-        internal async Task LoadGuildConfigs()
+        public async Task LoadGuildConfigs()
         {
             try
             {
@@ -72,6 +72,8 @@ namespace CrackersBot.Web.Services
 
                 var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
                 var iterator = container.GetItemQueryIterator<GuildConfig>();
+
+                Guilds.Clear();
 
                 while (iterator.HasMoreResults)
                 {
