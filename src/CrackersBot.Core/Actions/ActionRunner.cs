@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using CrackersBot.Core.Parameters;
 using CrackersBot.Core.Variables;
 
@@ -24,13 +25,15 @@ namespace CrackersBot.Core.Actions
                     var action = bot.GetRegisteredAction(actionType);
                     if (action.DoPreRunCheck(bot, processedParams))
                     {
+                        Debug.WriteLine($"Attempting to run action {actionType}");
+
                         var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
                         await action.Run(bot, parsedParams, context);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Debug.WriteLine(ex);
                 }
             }
         }

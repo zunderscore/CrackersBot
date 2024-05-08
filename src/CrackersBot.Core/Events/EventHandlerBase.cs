@@ -1,5 +1,6 @@
 using CrackersBot.Core.Actions;
 using CrackersBot.Core.Filters;
+using System.Diagnostics;
 using System.Reflection;
 
 namespace CrackersBot.Core.Events
@@ -48,7 +49,7 @@ namespace CrackersBot.Core.Events
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex);
+                    Debug.WriteLine(ex);
                     return false;
                 }
             }
