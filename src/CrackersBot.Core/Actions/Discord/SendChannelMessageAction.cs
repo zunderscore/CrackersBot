@@ -38,10 +38,10 @@ namespace CrackersBot.Core.Actions.Discord
                     ? String.Empty
                     : value.ToString() ?? String.Empty;
 
-                var embed = parameters[CommonNames.DISCORD_EMBED] as EmbedDefinition;
+                parameters.TryGetValue(CommonNames.DISCORD_EMBED, out object? embed);
 
                 await textChannel.SendMessageAsync(message,
-                    embed: embed?.BuildDiscordEmbed(bot, context));
+                    embed: (embed as EmbedDefinition)?.BuildDiscordEmbed(bot, context));
             }
         }
     }
