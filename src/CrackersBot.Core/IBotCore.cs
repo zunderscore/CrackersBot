@@ -13,7 +13,7 @@ namespace CrackersBot.Core
 
         ConcurrentDictionary<ulong, GuildConfig> Guilds { get; }
 
-        Task LoadGuildConfigs();
+        Task LoadGuildConfigsAsync();
 
         // Actions
 

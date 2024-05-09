@@ -14,7 +14,7 @@ namespace CrackersBot.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> ReloadGuildConfigs()
         {
-            await _bot.LoadGuildConfigs();
+            await _bot.LoadGuildConfigsAsync();
             await ActionRunner.RunActions(_bot, [
                 new(SendChannelMessageAction.ACTION_ID, new() {
                     { CommonNames.DISCORD_CHANNEL_ID, "1008199559400398910" },

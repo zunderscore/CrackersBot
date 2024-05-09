@@ -14,6 +14,8 @@ namespace CrackersBot.Web.Services
 {
     public class BotCore : IBotCore
     {
+        private const ulong ZUNDERSCORE_USER_ID = 209052262671187968;
+
         private readonly IConfiguration _config;
         private readonly DiscordSocketClient _discordSocketClient;
 
@@ -23,7 +25,8 @@ namespace CrackersBot.Web.Services
             _discordSocketClient = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 MessageCacheSize = 50,
-                GatewayIntents = GatewayIntents.All
+                GatewayIntents = GatewayIntents.All,
+                AlwaysDownloadUsers = true
             });
         }
 
@@ -40,9 +43,9 @@ namespace CrackersBot.Web.Services
             RegisterCoreEventHandlers();
             RegisterCoreFilters();
 
-            await LoadGuildConfigs();
+            await LoadGuildConfigsAsync();
 
-            _discordSocketClient.Ready += ClientReady;
+            _discordSocketClient.Ready += OnClientReady;
             _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
             _discordSocketClient.PresenceUpdated += OnPresenceUpdated;
             _discordSocketClient.MessageReceived += OnMessageReceived;
@@ -64,7 +67,7 @@ namespace CrackersBot.Web.Services
             await _discordSocketClient.DisposeAsync();
         }
 
-        public async Task LoadGuildConfigs()
+        public async Task LoadGuildConfigsAsync()
         {
             try
             {
@@ -89,7 +92,7 @@ namespace CrackersBot.Web.Services
             }
         }
 
-        internal async Task RegisterCommands()
+        internal async Task RegisterCommandsAsync()
         {
             foreach (var (guildId, guild) in Guilds)
             {
@@ -113,6 +116,22 @@ namespace CrackersBot.Web.Services
                     }
                 }
             }
+        }
+
+        internal async Task SendMessageToTheCaptainAsync(string message)
+        {
+            ArgumentNullException.ThrowIfNull(message);
+
+            await (await _discordSocketClient.GetUserAsync(ZUNDERSCORE_USER_ID))
+                .SendMessageAsync(message);
+        }
+
+        internal async Task SendMessageToTheCaptainAsync(string? message, Embed? embed)
+        {
+            ArgumentNullException.ThrowIfNull(embed);
+
+            await (await _discordSocketClient.GetUserAsync(ZUNDERSCORE_USER_ID))
+                .SendMessageAsync(embed: embed);
         }
 
         #endregion
@@ -359,10 +378,10 @@ namespace CrackersBot.Web.Services
 
         // Bot events
 
-        private async Task ClientReady()
+        private async Task OnClientReady()
         {
             await Task.Run(() => Debug.WriteLine("Client ready!"));
-            await RegisterCommands();
+            await RegisterCommandsAsync();
             return;
         }
 
@@ -380,6 +399,15 @@ namespace CrackersBot.Web.Services
                     await RegisteredEventHandlers[eventId]
                         .Handle(this, instance, new RunContext());
                 }
+            }
+
+            try
+            {
+                await SendMessageToTheCaptainAsync("CrackersBot is online!");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"Unable to send BotStarted DM. Error: {ex.Message}");
             }
         }
 
@@ -417,8 +445,7 @@ namespace CrackersBot.Web.Services
                 {
                     var context = new RunContext()
                         .WithDiscordGuild(socketGuild)
-                        .WithDiscordUser(user)
-                        .WithDiscordPresense(newPresence);
+                        .WithDiscordUser(user);
 
                     foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                     {
@@ -450,15 +477,18 @@ namespace CrackersBot.Web.Services
 
         private async Task OnMessageReceived(SocketMessage message)
         {
+            if (message.Author.Id == _discordSocketClient.CurrentUser.Id)
+            {
+                // Ignore messages from the bot itself
+                return;
+            }
+
             Debug.WriteLine("OnMessageReceived triggered");
             var eventId = MessageReceivedEventHandler.EVENT_ID;
 
             if (message.Channel is SocketTextChannel textChannel)
             {
                 var context = new RunContext()
-                    .WithDiscordGuild(textChannel.Guild)
-                    .WithDiscordUser(message.Author)
-                    .WithDiscordChannel(message.Channel)
                     .WithDiscordMessage(message);
 
                 var guildId = textChannel.Guild.Id;
@@ -472,9 +502,24 @@ namespace CrackersBot.Web.Services
                     }
                 }
             }
+            else if (message.Channel is SocketDMChannel dmChannel)
+            {
+                var context = new RunContext()
+                    .WithDiscordMessage(message);
+
+                // Honey... There's a bear at the door.
+                if (message.Author.Id == ZUNDERSCORE_USER_ID)
+                {
+                    await AdminCommandHandler.HandleDMCommandAsync(this, message.ToString() ?? String.Empty);
+                }
+                else
+                {
+                    await dmChannel.SendMessageAsync("SQUAK! Sorry, I only talk to the cap'n.");
+                }
+            }
         }
 
-        private async Task OnMessageUpdated(Cacheable<IMessage, ulong> oldMessage, SocketMessage newMessage, ISocketMessageChannel channel)
+        private async Task OnMessageUpdated(Cacheable<IMessage, ulong> oldMessage, SocketMessage message, ISocketMessageChannel channel)
         {
             Debug.WriteLine("OnMessageUpdated triggered");
             var eventId = MessageUpdatedEventHandler.EVENT_ID;
@@ -484,10 +529,7 @@ namespace CrackersBot.Web.Services
                 if (channel is ITextChannel textChannel)
                 {
                     var context = new RunContext()
-                        .WithDiscordGuild(textChannel.Guild)
-                        .WithDiscordUser(newMessage.Author)
-                        .WithDiscordChannel(channel)
-                        .WithDiscordMessage(newMessage)
+                        .WithDiscordMessage(message)
                         .WithPreviousMessageText(oldMessage.Value.ToString());
 
                     var guildId = textChannel.Guild.Id;
@@ -518,9 +560,6 @@ namespace CrackersBot.Web.Services
                 if (channel.Value is ITextChannel textChannel)
                 {
                     var context = new RunContext()
-                        .WithDiscordGuild(textChannel.Guild)
-                        .WithDiscordUser(message.Value.Author)
-                        .WithDiscordChannel(channel.Value)
                         .WithDiscordMessage(message.Value);
 
                     var guildId = textChannel.Guild.Id;
