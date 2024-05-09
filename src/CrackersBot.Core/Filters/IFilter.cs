@@ -11,8 +11,8 @@ namespace CrackersBot.Core.Filters
         string GetFilterName();
         string GetFilterDescription();
 
-        public virtual bool Pass(RunContext context, FilterDefinition filterDefinition)
-            => Pass(context, filterDefinition.Conditions, filterDefinition.InclusionType);
+        public virtual bool Pass(RunContext context, FilterInstance instance)
+            => Pass(context, instance.Conditions, instance.InclusionType);
 
         bool Pass(
             RunContext context,

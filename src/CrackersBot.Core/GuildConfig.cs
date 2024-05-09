@@ -7,7 +7,7 @@ namespace CrackersBot.Core
     public record GuildConfig(
         [property: JsonProperty("id")] string Id,
         ulong GuildId,
-        List<EventHandlerDefinition> EventHandlers,
+        List<EventHandlerInstance> EventHandlers,
         List<CommandDefinition> Commands
     );
 }

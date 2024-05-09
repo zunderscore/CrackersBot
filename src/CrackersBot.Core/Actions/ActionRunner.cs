@@ -8,24 +8,24 @@ namespace CrackersBot.Core.Actions
     {
         public static async Task RunActions(
             IBotCore bot,
-            List<KeyValuePair<string, Dictionary<string, string>>> actions,
+            IEnumerable<ActionInstance> actions,
             RunContext context
         )
         {
-            foreach (var (actionType, parameters) in actions)
+            foreach (var instance in actions)
             {
                 try
                 {
                     var processedParams = new Dictionary<string, string>();
-                    foreach (var (paramName, paramValue) in parameters)
+                    foreach (var (paramName, paramValue) in instance.Parameters ?? [])
                     {
                         processedParams.Add(paramName, DefaultVariableProcessor.ProcessVariables(bot, paramValue, context));
                     }
 
-                    var action = bot.GetRegisteredAction(actionType);
+                    var action = bot.GetRegisteredAction(instance.ActionId);
                     if (action.DoPreRunCheck(bot, processedParams))
                     {
-                        Debug.WriteLine($"Attempting to run action {actionType}");
+                        Debug.WriteLine($"Attempting to run action {instance.ActionId}");
 
                         var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
                         await action.Run(bot, parsedParams, context);

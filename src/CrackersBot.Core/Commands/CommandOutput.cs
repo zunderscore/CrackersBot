@@ -5,12 +5,12 @@ namespace CrackersBot.Core.Commands
 {
     public class CommandOutput(
         string? text = null,
-        IEnumerable<EmbedDefinition>? embeds = null,
+        IEnumerable<EmbedInstance>? embeds = null,
         bool ephemeral = false
     )
     {
         public string? Text { get; } = text;
-        public IEnumerable<EmbedDefinition>? Embeds { get; } = embeds;
+        public IEnumerable<EmbedInstance>? Embeds { get; } = embeds;
         public bool Ephemeral { get; } = ephemeral;
 
         public IEnumerable<Embed>? GetParsedEmbeds(IBotCore bot, RunContext context)

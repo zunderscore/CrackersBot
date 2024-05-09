@@ -375,10 +375,10 @@ namespace CrackersBot.Web.Services
 
             foreach (var (_, guild) in Guilds)
             {
-                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
+                foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
                     await RegisteredEventHandlers[eventId]
-                        .Handle(this, eventHandlerDefinition, new RunContext());
+                        .Handle(this, instance, new RunContext());
                 }
             }
         }
@@ -411,36 +411,38 @@ namespace CrackersBot.Web.Services
 
             foreach (var (guildId, guild) in Guilds)
             {
-                var context = new RunContext()
-                    .WithDiscordGuild(_discordSocketClient.GetGuild(guildId))
-                    .WithDiscordUser(user)
-                    .WithDiscordPresense(newPresence);
+                var socketGuild = _discordSocketClient.GetGuild(guildId);
 
-                foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
+                if (socketGuild.Users.Any(u => u.Id == user.Id))
                 {
-                    await RegisteredEventHandlers[eventId]
-                        .Handle(this, eventDef, context);
-                }
-
-                if (startedStreaming)
-                {
-                    eventId = UserStartedStreamingEventHandler.EVENT_ID;
+                    var context = new RunContext()
+                        .WithDiscordGuild(socketGuild)
+                        .WithDiscordUser(user)
+                        .WithDiscordPresense(newPresence);
 
                     foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                     {
-                        await RegisteredEventHandlers[eventId]
-                            .Handle(this, eventDef, context);
+                        await RegisteredEventHandlers[eventId].Handle(this, eventDef, context);
                     }
-                }
 
-                if (stoppedStreaming)
-                {
-                    eventId = UserStoppedStreamingEventHandler.EVENT_ID;
-
-                    foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
+                    if (startedStreaming)
                     {
-                        await RegisteredEventHandlers[eventId]
-                            .Handle(this, eventDef, context);
+                        eventId = UserStartedStreamingEventHandler.EVENT_ID;
+
+                        foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
+                        {
+                            await RegisteredEventHandlers[eventId].Handle(this, eventDef, context);
+                        }
+                    }
+
+                    if (stoppedStreaming)
+                    {
+                        eventId = UserStoppedStreamingEventHandler.EVENT_ID;
+
+                        foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
+                        {
+                            await RegisteredEventHandlers[eventId].Handle(this, eventDef, context);
+                        }
                     }
                 }
             }
@@ -463,10 +465,10 @@ namespace CrackersBot.Web.Services
 
                 if (Guilds.TryGetValue(guildId, out var guild))
                 {
-                    foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
+                    foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                     {
                         await RegisteredEventHandlers[eventId]
-                            .Handle(this, eventHandlerDefinition, context);
+                            .Handle(this, instance, context);
                     }
                 }
             }
@@ -492,10 +494,10 @@ namespace CrackersBot.Web.Services
 
                     if (Guilds.TryGetValue(guildId, out var guild))
                     {
-                        foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
+                        foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
                             await RegisteredEventHandlers[eventId]
-                                .Handle(this, eventHandlerDefinition, context);
+                                .Handle(this, instance, context);
                         }
                     }
                 }
@@ -525,10 +527,10 @@ namespace CrackersBot.Web.Services
 
                     if (Guilds.TryGetValue(guildId, out var guild))
                     {
-                        foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
+                        foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
                             await RegisteredEventHandlers[eventId]
-                                .Handle(this, eventHandlerDefinition, context);
+                                .Handle(this, instance, context);
                         }
                     }
                 }
@@ -550,10 +552,10 @@ namespace CrackersBot.Web.Services
 
             if (Guilds.TryGetValue(socketGuild.Id, out var guild))
             {
-                foreach (var eventHandlerDefinition in guild.EventHandlers.Where(h => h.EventId == eventId))
+                foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
                     await RegisteredEventHandlers[eventId]
-                        .Handle(this, eventHandlerDefinition, context);
+                        .Handle(this, instance, context);
                 }
             }
         }

@@ -1,3 +1,4 @@
+using CrackersBot.Core.Actions;
 using CrackersBot.Core.Filters;
 
 namespace CrackersBot.Core.Events
@@ -10,28 +11,28 @@ namespace CrackersBot.Core.Events
 
         bool CheckFilters(
             IBotCore bot,
-            IEnumerable<FilterDefinition> filterDefinitions,
+            IEnumerable<FilterInstance> filters,
             FilterMode filterMode,
             RunContext context
         );
 
         public virtual Task Handle(
             IBotCore bot,
-            EventHandlerDefinition definition,
+            EventHandlerInstance instance,
             RunContext context
-        ) => Handle(bot, definition.Actions, context, definition.Filters, definition.FilterMode);
+        ) => Handle(bot, instance.Actions, context, instance.Filters, instance.FilterMode);
 
         Task Handle(
             IBotCore bot,
-            List<KeyValuePair<string, Dictionary<string, string>>> actions,
+            IEnumerable<ActionInstance> actions,
             RunContext context,
-            IEnumerable<FilterDefinition>? filters = null,
+            IEnumerable<FilterInstance>? filters = null,
             FilterMode filterMode = FilterMode.All
         );
 
         Task RunActions(
             IBotCore bot,
-            List<KeyValuePair<string, Dictionary<string, string>>> actions,
+            IEnumerable<ActionInstance> actions,
             RunContext context
         );
     }

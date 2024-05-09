@@ -7,13 +7,13 @@ namespace CrackersBot.Core.Commands
     public class CommandDefinition(
         string name,
         string description,
-        List<KeyValuePair<string, Dictionary<string, string>>> actions,
+        IEnumerable<ActionInstance> actions,
         CommandOutput output
     )
     {
         public string Name { get; } = name;
         public string Description { get; } = description;
-        public List<KeyValuePair<string, Dictionary<string, string>>> Actions { get; } = actions;
+        public IEnumerable<ActionInstance> Actions { get; } = actions;
         public CommandOutput Output { get; } = output;
 
         public async Task RunActions(IBotCore bot, SocketSlashCommand slashCommand)

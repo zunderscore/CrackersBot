@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace CrackersBot.Core.Actions.Discord
 {
-    public partial class EmbedDefinition
+    public partial class EmbedInstance
     {
         public string? Title { get; set; }
         public string? Description { get; set; }
