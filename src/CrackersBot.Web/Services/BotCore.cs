@@ -57,8 +57,6 @@ namespace CrackersBot.Web.Services
             await _discordSocketClient.StartAsync();
 
             await _discordSocketClient.SetActivityAsync(new Game("with Loaf", ActivityType.Playing));
-
-            await OnBotStarted();
         }
 
         internal async Task StopBotCoreAsync()
@@ -126,7 +124,7 @@ namespace CrackersBot.Web.Services
                 .SendMessageAsync(message);
         }
 
-        internal async Task SendMessageToTheCaptainAsync(string? message, Embed? embed)
+        internal async Task SendMessageToTheCaptainAsync(Embed? embed)
         {
             ArgumentNullException.ThrowIfNull(embed);
 
@@ -382,6 +380,7 @@ namespace CrackersBot.Web.Services
         {
             await Task.Run(() => Debug.WriteLine("Client ready!"));
             await RegisterCommandsAsync();
+            await OnBotStarted();
             return;
         }
 
@@ -396,14 +395,13 @@ namespace CrackersBot.Web.Services
             {
                 foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
-                    await RegisteredEventHandlers[eventId]
-                        .Handle(this, instance, new RunContext());
+                    await RegisteredEventHandlers[eventId].Handle(this, instance, new RunContext());
                 }
             }
 
             try
             {
-                await SendMessageToTheCaptainAsync("CrackersBot is online!");
+                await SendMessageToTheCaptainAsync(AdminCommandHandler.GetStartupMessageEmbed(this));
             }
             catch (Exception ex)
             {
@@ -497,8 +495,7 @@ namespace CrackersBot.Web.Services
                 {
                     foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                     {
-                        await RegisteredEventHandlers[eventId]
-                            .Handle(this, instance, context);
+                        await RegisteredEventHandlers[eventId].Handle(this, instance, context);
                     }
                 }
             }
@@ -538,8 +535,7 @@ namespace CrackersBot.Web.Services
                     {
                         foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
-                            await RegisteredEventHandlers[eventId]
-                                .Handle(this, instance, context);
+                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
                         }
                     }
                 }
@@ -568,8 +564,7 @@ namespace CrackersBot.Web.Services
                     {
                         foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
-                            await RegisteredEventHandlers[eventId]
-                                .Handle(this, instance, context);
+                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
                         }
                     }
                 }
@@ -593,8 +588,7 @@ namespace CrackersBot.Web.Services
             {
                 foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
-                    await RegisteredEventHandlers[eventId]
-                        .Handle(this, instance, context);
+                    await RegisteredEventHandlers[eventId].Handle(this, instance, context);
                 }
             }
         }

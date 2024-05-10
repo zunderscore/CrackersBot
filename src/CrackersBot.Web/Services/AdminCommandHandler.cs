@@ -1,7 +1,28 @@
+using CrackersBot.Core.Actions.Discord;
+using Discord;
+
 namespace CrackersBot.Web.Services
 {
     internal static class AdminCommandHandler
     {
+        private const string ACCENT_COLOR = "#0066FF";
+
+        public static Embed GetStartupMessageEmbed(BotCore bot)
+        {
+            return new EmbedInstance()
+            {
+                Title = "CrackersBot is online!",
+                Color = ACCENT_COLOR,
+                Fields = [
+                    new("Actions", $"Registered actions: {bot.RegisteredActions.Count}"),
+                    new("Variables", $"Registered variables: {bot.RegisteredVariables.Count}"),
+                    new("Filters", $"Registered filters: {bot.RegisteredFilters.Count}"),
+                    new("Event Handlers", $"Registered event handlers: {bot.RegisteredActions.Count}"),
+                    new("Guilds", $"Guild configurations loaded: {bot.Guilds.Count}"),
+                ]
+            }.BuildDiscordEmbed(bot, new());
+        }
+
         public static async Task HandleDMCommandAsync(BotCore bot, string message)
         {
             var messageParts = message.Split(' ');
