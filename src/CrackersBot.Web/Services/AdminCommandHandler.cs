@@ -12,6 +12,10 @@ namespace CrackersBot.Web.Services
 
                 switch (keyword)
                 {
+                    case "ping":
+                        await bot.SendMessageToTheCaptainAsync("PONG!");
+                        break;
+
                     case "reload":
                         if (messageParts.Length > 1)
                         {
