@@ -69,8 +69,8 @@ namespace CrackersBot.Core.Auditing
                     AuthorName = user.GlobalName,
                     AuthorIconUrl = user.GetDisplayAvatarUrl(),
                     Fields = [
-                        new("Stream URL", streamingActivity!.Url),
-                        new("Stream Title", streamingActivity!.Details),
+                        new("Stream URL", String.IsNullOrWhiteSpace(streamingActivity?.Url) ? "[unknown]" : streamingActivity.Url),
+                        new("Stream Title", String.IsNullOrWhiteSpace(streamingActivity?.Details) ? "[none]" : streamingActivity.Details),
                     ]
                 };
 
@@ -113,6 +113,7 @@ namespace CrackersBot.Core.Auditing
 
         public static Embed? GetMessageDeletedMessage(IBotCore bot, IMessage message)
         {
+            var originalMessage = message.ToString();
             var embed = new EmbedInstance()
             {
                 Title = "Message Deleted",
@@ -120,7 +121,7 @@ namespace CrackersBot.Core.Auditing
                 AuthorIconUrl = message.Author.GetDisplayAvatarUrl(),
                 Fields = [
                     new("Channel", $"<#{message.Channel.Id}>"),
-                    new("Original Message", message.ToString() ?? String.Empty)
+                    new("Original Message", String.IsNullOrWhiteSpace(originalMessage) ? "[empty]" : originalMessage)
                 ]
             };
 
