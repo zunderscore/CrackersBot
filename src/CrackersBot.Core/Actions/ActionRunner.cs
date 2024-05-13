@@ -17,6 +17,8 @@ namespace CrackersBot.Core.Actions
             {
                 try
                 {
+                    if (!instance.Enabled) return;
+
                     var processedParams = new Dictionary<string, string>();
                     foreach (var (paramName, paramValue) in instance.Parameters ?? [])
                     {

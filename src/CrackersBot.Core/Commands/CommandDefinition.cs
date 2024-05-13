@@ -8,11 +8,13 @@ namespace CrackersBot.Core.Commands
         string name,
         string description,
         IEnumerable<ActionInstance> actions,
-        CommandOutput output
+        CommandOutput output,
+        bool enabled = true
     )
     {
         public string Name { get; } = name;
         public string Description { get; } = description;
+        public bool Enabled { get; } = enabled;
         public IEnumerable<ActionInstance> Actions { get; } = actions;
         public CommandOutput Output { get; } = output;
 
