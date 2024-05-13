@@ -6,6 +6,7 @@ namespace CrackersBot.Core.Actions
         string ActionId,
         Dictionary<string, string>? Parameters = null,
         IEnumerable<FilterInstance>? Filters = null,
+        FilterMode FilterMode = FilterMode.All,
         bool Enabled = true
     );
 }

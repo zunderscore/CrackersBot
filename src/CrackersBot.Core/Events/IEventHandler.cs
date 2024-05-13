@@ -9,13 +9,6 @@ namespace CrackersBot.Core.Events
         string GetEventName();
         string GetEventDescription();
 
-        bool CheckFilters(
-            IBotCore bot,
-            IEnumerable<FilterInstance> filters,
-            FilterMode filterMode,
-            RunContext context
-        );
-
         public virtual Task Handle(
             IBotCore bot,
             EventHandlerInstance instance,

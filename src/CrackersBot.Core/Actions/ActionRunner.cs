@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using CrackersBot.Core.Filters;
 using CrackersBot.Core.Parameters;
 using CrackersBot.Core.Variables;
 
@@ -22,13 +23,17 @@ namespace CrackersBot.Core.Actions
                         processedParams.Add(paramName, DefaultVariableProcessor.ProcessVariables(bot, paramValue, context));
                     }
 
-                    var action = bot.GetRegisteredAction(instance.ActionId);
-                    if (action.DoPreRunCheck(bot, processedParams))
+                    if (FilterHelpers.CheckFilters(bot, instance.Filters ?? [], instance.FilterMode, context))
                     {
-                        Debug.WriteLine($"Attempting to run action {instance.ActionId}");
+                        var action = bot.GetRegisteredAction(instance.ActionId);
 
-                        var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
-                        await action.Run(bot, parsedParams, context);
+                        if (action.DoPreRunCheck(bot, processedParams))
+                        {
+                            Debug.WriteLine($"Attempting to run action {instance.ActionId}");
+
+                            var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
+                            await action.Run(bot, parsedParams, context);
+                        }
                     }
                 }
                 catch (Exception ex)
