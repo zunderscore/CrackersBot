@@ -8,6 +8,7 @@ using CrackersBot.Core.Variables;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Azure.Cosmos.Linq;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 
@@ -82,7 +83,7 @@ namespace CrackersBot.Web.Services
                 {
                     foreach (var item in await iterator.ReadNextAsync())
                     {
-                        Guilds.TryAdd(item.GuildId, item);
+                        AddGuildConfig(item);
                     }
                 }
             }
@@ -90,6 +91,40 @@ namespace CrackersBot.Web.Services
             {
                 Debug.WriteLine(ex.Message);
             }
+        }
+
+        public async Task LoadGuildConfigAsync(ulong guildId)
+        {
+            using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
+            var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
+            using var iterator = container.GetItemLinqQueryable<GuildConfig>()
+                .Where(c => c.GuildId == guildId)
+                .ToFeedIterator();
+
+            while (iterator.HasMoreResults)
+            {
+                foreach (var guild in await iterator.ReadNextAsync())
+                {
+                    if (guild is not null)
+                    {
+                        AddGuildConfig(guild);
+                    }
+                    else
+                    {
+                        Debug.WriteLine($"No guild config found for guild ID {guildId}");
+                    }
+                }
+            }
+        }
+
+        public void AddGuildConfig(GuildConfig config)
+        {
+            if (Guilds.ContainsKey(config.GuildId))
+            {
+                Guilds.TryRemove(config.GuildId, out var _);
+            }
+
+            Guilds.TryAdd(config.GuildId, config);
         }
 
         internal async Task RegisterCommandsAsync()

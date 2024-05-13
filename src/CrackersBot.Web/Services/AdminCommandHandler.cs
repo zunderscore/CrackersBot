@@ -44,9 +44,11 @@ namespace CrackersBot.Web.Services
                             switch (reloadKeyword)
                             {
                                 case "configs":
-                                    await bot.SendMessageToTheCaptainAsync("SQUAK! Roger roger. Reloading configs...");
-                                    await bot.LoadGuildConfigsAsync();
-                                    await bot.SendMessageToTheCaptainAsync($"Guild configs have been reloaded. Listening for events/commands for {bot.Guilds.Count} guild{(bot.Guilds.Count == 1 ? String.Empty : "s")}.");
+                                    await ReloadGuildsAsync(bot);
+                                    break;
+
+                                case "guild":
+                                    await ReloadGuildConfigAsync(bot, messageParts);
                                     break;
 
                                 default:
@@ -64,6 +66,42 @@ namespace CrackersBot.Web.Services
                         await bot.SendMessageToTheCaptainAsync("That's cool I guess");
                         break;
                 }
+            }
+        }
+
+        private static async Task ReloadGuildsAsync(BotCore bot)
+        {
+            await bot.SendMessageToTheCaptainAsync("SQUAK! Roger roger. Reloading configs...");
+            await bot.LoadGuildConfigsAsync();
+            await bot.SendMessageToTheCaptainAsync($"Guild configs have been reloaded. Listening for events/commands for {bot.Guilds.Count} guild{(bot.Guilds.Count == 1 ? String.Empty : "s")}.");
+        }
+
+        private static async Task ReloadGuildConfigAsync(BotCore bot, string[] messageParts)
+        {
+            if (messageParts.Length > 2)
+            {
+                if (UInt64.TryParse(messageParts[2], out var guildId))
+                {
+                    await bot.SendMessageToTheCaptainAsync("Roger roger, attempting to reload guild...");
+                    await bot.LoadGuildConfigAsync(guildId);
+
+                    if (bot.Guilds.ContainsKey(guildId))
+                    {
+                        await bot.SendMessageToTheCaptainAsync("Guild reloaded");
+                    }
+                    else
+                    {
+                        await bot.SendMessageToTheCaptainAsync("Doesn't look like there's a guild config with that guild ID");
+                    }
+                }
+                else
+                {
+                    await bot.SendMessageToTheCaptainAsync("That's not a valid guild ID");
+                }
+            }
+            else
+            {
+                await bot.SendMessageToTheCaptainAsync("You have to specify a guild ID to reload, cap'n");
             }
         }
     }
