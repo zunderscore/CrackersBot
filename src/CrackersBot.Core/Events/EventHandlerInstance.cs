@@ -11,10 +11,10 @@ namespace CrackersBot.Core.Events
         bool enabled = true
     )
     {
-        public string EventId { get; } = eventId;
-        public bool Enabled { get; } = enabled;
-        public IEnumerable<ActionInstance> Actions { get; } = actions;
-        public IEnumerable<FilterInstance>? Filters { get; } = filters;
-        public FilterMode FilterMode { get; } = filterMode;
+        public string EventId { get; set; } = eventId;
+        public bool Enabled { get; set; } = enabled;
+        public IEnumerable<ActionInstance> Actions { get; set; } = actions;
+        public IEnumerable<FilterInstance>? Filters { get; set; } = filters;
+        public FilterMode FilterMode { get; set; } = filterMode;
     }
 }

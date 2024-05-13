@@ -12,11 +12,11 @@ namespace CrackersBot.Core.Commands
         bool enabled = true
     )
     {
-        public string Name { get; } = name;
-        public string Description { get; } = description;
-        public bool Enabled { get; } = enabled;
-        public IEnumerable<ActionInstance> Actions { get; } = actions;
-        public CommandOutput Output { get; } = output;
+        public string Name { get; set; } = name;
+        public string Description { get; set; } = description;
+        public bool Enabled { get; set; } = enabled;
+        public IEnumerable<ActionInstance> Actions { get; set; } = actions;
+        public CommandOutput Output { get; set; } = output;
 
         public async Task RunActions(IBotCore bot, SocketSlashCommand slashCommand)
         {
