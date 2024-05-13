@@ -45,8 +45,6 @@ namespace CrackersBot.Web.Services
             RegisterCoreEventHandlers();
             RegisterCoreFilters();
 
-            await LoadGuildConfigsAsync();
-
             _discordSocketClient.Ready += OnClientReady;
             _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
             _discordSocketClient.PresenceUpdated += OnPresenceUpdated;
@@ -81,9 +79,9 @@ namespace CrackersBot.Web.Services
 
                 while (iterator.HasMoreResults)
                 {
-                    foreach (var item in await iterator.ReadNextAsync())
+                    foreach (var guild in await iterator.ReadNextAsync())
                     {
-                        AddGuildConfig(item);
+                        await AddGuildConfigAsync(guild);
                     }
                 }
             }
@@ -107,7 +105,7 @@ namespace CrackersBot.Web.Services
                 {
                     if (guild is not null)
                     {
-                        AddGuildConfig(guild);
+                        await AddGuildConfigAsync(guild);
                     }
                     else
                     {
@@ -117,57 +115,55 @@ namespace CrackersBot.Web.Services
             }
         }
 
-        public void AddGuildConfig(GuildConfig config)
+        public async Task AddGuildConfigAsync(GuildConfig guild)
         {
-            if (Guilds.ContainsKey(config.GuildId))
+            if (Guilds.ContainsKey(guild.GuildId))
             {
-                Guilds.TryRemove(config.GuildId, out var _);
+                Guilds.TryRemove(guild.GuildId, out var _);
             }
 
-            Guilds.TryAdd(config.GuildId, config);
+            Guilds.TryAdd(guild.GuildId, guild);
+            await RegisterGuildCommandsAsync(guild);
         }
 
-        internal async Task RegisterCommandsAsync()
+        internal async Task RegisterGuildCommandsAsync(GuildConfig guild)
         {
-            foreach (var (guildId, guild) in Guilds)
+            var socketGuild = _discordSocketClient.GetGuild(guild.GuildId);
+
+            if (socketGuild is not null)
             {
-                var socketGuild = _discordSocketClient.GetGuild(guildId);
+                var existingCommands = await socketGuild.GetApplicationCommandsAsync();
 
-                if (socketGuild is not null)
+                foreach (var command in guild.Commands)
                 {
-                    var existingCommands = await socketGuild.GetApplicationCommandsAsync();
-
-                    foreach (var command in guild.Commands)
+                    if (command.Enabled)
                     {
-                        if (command.Enabled)
+                        var commandBuilder = new SlashCommandBuilder();
+                        try
                         {
-                            var commandBuilder = new SlashCommandBuilder();
-                            try
+                            await socketGuild.CreateApplicationCommandAsync(commandBuilder
+                                .WithName(command.Name)
+                                .WithDescription(command.Description)
+                                .Build());
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Unable to create command {command.Name}: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            var existingCommand = existingCommands.FirstOrDefault(c => String.Equals(c.Name, command.Name, StringComparison.InvariantCultureIgnoreCase));
+                            if (existingCommand is not null)
                             {
-                                await socketGuild.CreateApplicationCommandAsync(commandBuilder
-                                    .WithName(command.Name)
-                                    .WithDescription(command.Description)
-                                    .Build());
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.WriteLine($"Unable to create command {command.Name}: {ex.Message}");
+                                await existingCommand.DeleteAsync();
                             }
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            try
-                            {
-                                var existingCommand = existingCommands.FirstOrDefault(c => String.Equals(c.Name, command.Name, StringComparison.InvariantCultureIgnoreCase));
-                                if (existingCommand is not null)
-                                {
-                                    await existingCommand.DeleteAsync();
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Debug.WriteLine($"Unable to remove command {command.Name}: {ex.Message}");
-                            }
+                            Debug.WriteLine($"Unable to remove command {command.Name}: {ex.Message}");
                         }
                     }
                 }
@@ -437,7 +433,7 @@ namespace CrackersBot.Web.Services
         private async Task OnClientReady()
         {
             await Task.Run(() => Debug.WriteLine("Client ready!"));
-            await RegisterCommandsAsync();
+            await LoadGuildConfigsAsync();
             await OnBotStarted();
             return;
         }

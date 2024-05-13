@@ -85,8 +85,9 @@ namespace CrackersBot.Web.Services
                     await bot.SendMessageToTheCaptainAsync("Roger roger, attempting to reload guild...");
                     await bot.LoadGuildConfigAsync(guildId);
 
-                    if (bot.Guilds.ContainsKey(guildId))
+                    if (bot.Guilds.TryGetValue(guildId, out var guild))
                     {
+                        await bot.RegisterGuildCommandsAsync(guild);
                         await bot.SendMessageToTheCaptainAsync("Guild reloaded");
                     }
                     else
