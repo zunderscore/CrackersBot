@@ -17,7 +17,7 @@ namespace CrackersBot.Web.Services
                     new("Actions", $"Registered actions: {bot.RegisteredActions.Count}"),
                     new("Variables", $"Registered variables: {bot.RegisteredVariables.Count}"),
                     new("Filters", $"Registered filters: {bot.RegisteredFilters.Count}"),
-                    new("Event Handlers", $"Registered event handlers: {bot.RegisteredActions.Count}"),
+                    new("Event Handlers", $"Registered event handlers: {bot.RegisteredEventHandlers.Count}"),
                     new("Guilds", $"Guild configurations loaded: {bot.Guilds.Count}"),
                 ]
             }.BuildDiscordEmbed(bot, new());
