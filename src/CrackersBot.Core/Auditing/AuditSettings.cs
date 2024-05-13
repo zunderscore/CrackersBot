@@ -2,10 +2,10 @@ namespace CrackersBot.Core.Auditing
 {
     public class AuditSettings
     {
-        public ulong? AuditChannelId { get; } = null;
-        public bool UserJoined { get; }
-        public bool UserLeft { get; }
-        public bool UserStartedStreaming { get; }
-        public bool UserStoppedStreaming { get; }
+        public ulong? AuditChannelId { get; set; } = null;
+        public bool UserJoined { get; set; }
+        public bool UserLeft { get; set; }
+        public bool UserStartedStreaming { get; set; }
+        public bool UserStoppedStreaming { get; set; }
     }
 }
