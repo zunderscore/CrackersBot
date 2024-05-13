@@ -556,6 +556,16 @@ namespace CrackersBot.Web.Services
 
                     if (Guilds.TryGetValue(guildId, out var guild))
                     {
+                        if (guild.AuditSettings.MessageUpdated)
+                        {
+                            await AuditHelpers.SendAuditMessageAsync(
+                                _discordSocketClient,
+                                guild.GuildId,
+                                guild.AuditSettings.AuditChannelId,
+                                AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.ToString() ?? String.Empty)
+                            );
+                        }
+
                         foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
                             await RegisteredEventHandlers[eventId].Handle(this, instance, context);
@@ -585,6 +595,16 @@ namespace CrackersBot.Web.Services
 
                     if (Guilds.TryGetValue(guildId, out var guild))
                     {
+                        if (guild.AuditSettings.MessageDeleted)
+                        {
+                            await AuditHelpers.SendAuditMessageAsync(
+                                _discordSocketClient,
+                                guild.GuildId,
+                                guild.AuditSettings.AuditChannelId,
+                                AuditHelpers.GetMessageDeletedMessage(this, message.Value)
+                            );
+                        }
+
                         foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                         {
                             await RegisteredEventHandlers[eventId].Handle(this, instance, context);

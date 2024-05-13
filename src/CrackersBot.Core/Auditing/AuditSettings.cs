@@ -7,5 +7,7 @@ namespace CrackersBot.Core.Auditing
         public bool UserLeft { get; set; }
         public bool UserStartedStreaming { get; set; }
         public bool UserStoppedStreaming { get; set; }
+        public bool MessageUpdated { get; set; }
+        public bool MessageDeleted { get; set; }
     }
 }

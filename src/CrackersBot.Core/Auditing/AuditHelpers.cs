@@ -92,5 +92,39 @@ namespace CrackersBot.Core.Auditing
 
             return embed.BuildDiscordEmbed(bot, new());
         }
+
+        public static Embed? GetMessageUpdatedMessage(IBotCore bot, IMessage message, string originalMessage)
+        {
+            var updatedMessage = message.ToString();
+            var embed = new EmbedInstance()
+            {
+                Title = "Message Updated",
+                AuthorName = message.Author.GlobalName,
+                AuthorIconUrl = message.Author.GetDisplayAvatarUrl(),
+                Fields = [
+                    new("Channel", $"<#{message.Channel.Id}>"),
+                    new("Original Message", String.IsNullOrWhiteSpace(originalMessage) ? "[empty]" : originalMessage),
+                    new("Updated Message", String.IsNullOrWhiteSpace(updatedMessage) ? "[empty]" : updatedMessage)
+                ]
+            };
+
+            return embed.BuildDiscordEmbed(bot, new());
+        }
+
+        public static Embed? GetMessageDeletedMessage(IBotCore bot, IMessage message)
+        {
+            var embed = new EmbedInstance()
+            {
+                Title = "Message Deleted",
+                AuthorName = message.Author.GlobalName,
+                AuthorIconUrl = message.Author.GetDisplayAvatarUrl(),
+                Fields = [
+                    new("Channel", $"<#{message.Channel.Id}>"),
+                    new("Original Message", message.ToString() ?? String.Empty)
+                ]
+            };
+
+            return embed.BuildDiscordEmbed(bot, new());
+        }
     }
 }
