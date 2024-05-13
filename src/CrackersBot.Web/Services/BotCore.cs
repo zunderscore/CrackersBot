@@ -1,5 +1,6 @@
 using CrackersBot.Core;
 using CrackersBot.Core.Actions;
+using CrackersBot.Core.Auditing;
 using CrackersBot.Core.Events;
 using CrackersBot.Core.Events.Discord;
 using CrackersBot.Core.Filters;
@@ -51,6 +52,7 @@ namespace CrackersBot.Web.Services
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageUpdated += OnMessageUpdated;
             _discordSocketClient.MessageDeleted += OnMessageDeleted;
+            _discordSocketClient.UserJoined += OnUserJoined;
             _discordSocketClient.UserLeft += OnUserLeft;
 
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
@@ -454,6 +456,16 @@ namespace CrackersBot.Web.Services
                     {
                         eventId = UserStartedStreamingEventHandler.EVENT_ID;
 
+                        if (guild.AuditSettings.UserStartedStreaming)
+                        {
+                            await AuditHelpers.SendAuditMessageAsync(
+                                _discordSocketClient,
+                                guild.GuildId,
+                                guild.AuditSettings.AuditChannelId,
+                                AuditHelpers.GetUserStartedStreamingMessage(this, user)
+                            );
+                        }
+
                         foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                         {
                             await RegisteredEventHandlers[eventId].Handle(this, eventDef, context);
@@ -463,6 +475,17 @@ namespace CrackersBot.Web.Services
                     if (stoppedStreaming)
                     {
                         eventId = UserStoppedStreamingEventHandler.EVENT_ID;
+
+                        if (guild.AuditSettings.UserStoppedStreaming)
+                        {
+                            await AuditHelpers.SendAuditMessageAsync(
+                                _discordSocketClient,
+                                guild.GuildId,
+                                guild.AuditSettings.AuditChannelId,
+                                AuditHelpers.GetUserStoppedStreamingMessage(this, user)
+                            );
+                        }
+
 
                         foreach (var eventDef in guild.EventHandlers.Where(e => e.EventId == eventId))
                         {
@@ -575,6 +598,34 @@ namespace CrackersBot.Web.Services
             }
         }
 
+        private async Task OnUserJoined(SocketGuildUser user)
+        {
+            Debug.WriteLine($"OnUserJoined triggered. Guild: {user.Guild.Name} ({user.Guild.Id}). User: {user.Username} ({user.Id})");
+            var eventId = UserJoinedEventHandler.EVENT_ID;
+
+            var context = new RunContext()
+                .WithDiscordGuild(user.Guild)
+                .WithDiscordUser(user);
+
+            if (Guilds.TryGetValue(user.Guild.Id, out var guild))
+            {
+                if (guild.AuditSettings.UserJoined)
+                {
+                    await AuditHelpers.SendAuditMessageAsync(
+                        _discordSocketClient,
+                        guild.GuildId,
+                        guild.AuditSettings.AuditChannelId,
+                        AuditHelpers.GetUserJoinedMessage(this, user)
+                    );
+                }
+
+                foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
+                {
+                    await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                }
+            }
+        }
+
         private async Task OnUserLeft(SocketGuild socketGuild, SocketUser user)
         {
             Debug.WriteLine($"OnUserLeft triggered. Guild: {socketGuild.Name} ({socketGuild.Id}). User: {user.Username} ({user.Id})");
@@ -586,6 +637,16 @@ namespace CrackersBot.Web.Services
 
             if (Guilds.TryGetValue(socketGuild.Id, out var guild))
             {
+                if (guild.AuditSettings.UserLeft)
+                {
+                    await AuditHelpers.SendAuditMessageAsync(
+                        _discordSocketClient,
+                        guild.GuildId,
+                        guild.AuditSettings.AuditChannelId,
+                        AuditHelpers.GetUserLeftMessage(this, user)
+                    );
+                }
+
                 foreach (var instance in guild.EventHandlers.Where(h => h.EventId == eventId))
                 {
                     await RegisteredEventHandlers[eventId].Handle(this, instance, context);

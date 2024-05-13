@@ -41,6 +41,11 @@ namespace CrackersBot.Core
                     Metadata.TryAdd(CommonNames.DISCORD_USER_CUSTOM_STATUS, customStatusActivity!.State?.ToString() ?? String.Empty);
                     Metadata.TryAdd(CommonNames.DISCORD_USER_CUSTOM_STATUS_EMOTE_NAME, customStatusActivity!.Emote?.Name ?? String.Empty);
                 }
+
+                if (user is IGuildUser guildUser)
+                {
+                    WithDiscordGuild(guildUser.Guild);
+                }
             }
 
             return this;
