@@ -36,5 +36,6 @@ namespace CrackersBot.Core
         public const string REGISTERED_VARIABLE_COUNT = "RegisteredVariableCount";
         public const string STREAM_TITLE = "StreamTitle";
         public const string STREAM_URL = "StreamUrl";
+        public const string TIME_IN_MILLISECONDS = "TimeInMilliseconds";
     }
 }
