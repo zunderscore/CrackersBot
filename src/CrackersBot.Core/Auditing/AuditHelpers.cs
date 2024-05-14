@@ -82,7 +82,6 @@ namespace CrackersBot.Core.Auditing
 
         public static Embed? GetUserStoppedStreamingMessage(IBotCore bot, IUser user)
         {
-            var streamingActivity = user.Activities.First(a => a.Type == ActivityType.Streaming) as StreamingGame;
             var embed = new EmbedInstance()
             {
                 Title = "User Stopped Streaming",
