@@ -71,9 +71,8 @@ namespace CrackersBot.Web.Services
             try
             {
                 using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
-
                 var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
-                var iterator = container.GetItemQueryIterator<GuildConfig>();
+                using var iterator = container.GetItemQueryIterator<GuildConfig>();
 
                 Guilds.Clear();
 
@@ -95,9 +94,7 @@ namespace CrackersBot.Web.Services
         {
             using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
             var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
-            using var iterator = container.GetItemLinqQueryable<GuildConfig>()
-                .Where(c => c.GuildId == guildId)
-                .ToFeedIterator();
+            using var iterator = container.GetItemQueryIterator<GuildConfig>($"SELECT * FROM GuildConfigs c WHERE c.GuildId = \"{guildId}\"");
 
             while (iterator.HasMoreResults)
             {
