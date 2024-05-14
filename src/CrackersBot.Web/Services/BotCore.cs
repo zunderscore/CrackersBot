@@ -598,31 +598,38 @@ namespace CrackersBot.Web.Services
 
             if (oldMessage.HasValue)
             {
-                if (channel is ITextChannel textChannel)
+                if (oldMessage.ToString() != message.ToString())
                 {
-                    var context = new RunContext()
-                        .WithDiscordMessage(message)
-                        .WithPreviousMessageText(oldMessage.Value.ToString());
-
-                    var guildId = textChannel.Guild.Id;
-
-                    if (Guilds.TryGetValue(guildId, out var guild))
+                    if (channel is ITextChannel textChannel)
                     {
-                        if (guild.AuditSettings.MessageUpdated)
-                        {
-                            await AuditHelpers.SendAuditMessageAsync(
-                                _discordSocketClient,
-                                guild.GuildId,
-                                guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.ToString() ?? String.Empty)
-                            );
-                        }
+                        var context = new RunContext()
+                            .WithDiscordMessage(message)
+                            .WithPreviousMessageText(oldMessage.Value.ToString());
 
-                        foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
+                        var guildId = textChannel.Guild.Id;
+
+                        if (Guilds.TryGetValue(guildId, out var guild))
                         {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                            if (guild.AuditSettings.MessageUpdated)
+                            {
+                                await AuditHelpers.SendAuditMessageAsync(
+                                    _discordSocketClient,
+                                    guild.GuildId,
+                                    guild.AuditSettings.AuditChannelId,
+                                    AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.ToString() ?? String.Empty)
+                                );
+                            }
+
+                            foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
+                            {
+                                await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                            }
                         }
                     }
+                }
+                else
+                {
+                    Debug.WriteLine("Messages are identical; skipping events");
                 }
             }
             else
