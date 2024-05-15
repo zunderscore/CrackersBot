@@ -617,7 +617,7 @@ namespace CrackersBot.Web.Services
 
                         if (Guilds.TryGetValue(guildId, out var guild))
                         {
-                            if (guild.AuditSettings.MessageUpdated)
+                            if (guild.AuditSettings.MessageUpdated && guild.AuditSettings.ShouldSendAuditMessage(message.Channel.Id))
                             {
                                 await AuditHelpers.SendAuditMessageAsync(
                                     _discordSocketClient,
@@ -661,7 +661,7 @@ namespace CrackersBot.Web.Services
 
                     if (Guilds.TryGetValue(guildId, out var guild))
                     {
-                        if (guild.AuditSettings.MessageDeleted)
+                        if (guild.AuditSettings.MessageDeleted && guild.AuditSettings.ShouldSendAuditMessage(channel.Id))
                         {
                             await AuditHelpers.SendAuditMessageAsync(
                                 _discordSocketClient,
