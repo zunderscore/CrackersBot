@@ -129,40 +129,18 @@ namespace CrackersBot.Web.Services
 
             if (socketGuild is not null)
             {
-                var existingCommands = await socketGuild.GetApplicationCommandsAsync();
-
-                foreach (var command in guild.Commands)
+                try
                 {
-                    if (command.Enabled)
-                    {
-                        var commandBuilder = new SlashCommandBuilder();
-                        try
-                        {
-                            await socketGuild.CreateApplicationCommandAsync(commandBuilder
-                                .WithName(command.Name)
-                                .WithDescription(command.Description)
-                                .Build());
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"Unable to create command {command.Name}: {ex.Message}");
-                        }
-                    }
-                    else
-                    {
-                        try
-                        {
-                            var existingCommand = existingCommands.FirstOrDefault(c => String.Equals(c.Name, command.Name, StringComparison.InvariantCultureIgnoreCase));
-                            if (existingCommand is not null)
-                            {
-                                await existingCommand.DeleteAsync();
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine($"Unable to remove command {command.Name}: {ex.Message}");
-                        }
-                    }
+                    var commandsToAdd = guild.Commands
+                        .Where(c => c.Enabled)
+                        .Select(c => c.BuildCommand())
+                        .ToArray();
+
+                    await socketGuild.BulkOverwriteApplicationCommandAsync(commandsToAdd);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Unable to setup guild commands for guild {guild.GuildId}. Error: {ex.Message}");
                 }
             }
         }
