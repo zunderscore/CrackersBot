@@ -39,14 +39,24 @@ namespace CrackersBot.Core.Commands
                 .Build(),
         };
 
-        public async Task RunActions(IBotCore bot, SocketSlashCommand slashCommand)
+        public async Task RunActions(IBotCore bot, SocketCommandBase command)
         {
             var context = new RunContext()
-                .WithDiscordUser(slashCommand.User)
-                .WithDiscordChannel(slashCommand.Channel);
+                .WithDiscordUser(command.User)
+                .WithDiscordChannel(command.Channel);
+
+            if (command is SocketUserCommand userCommand)
+            {
+                context.WithDiscordTargetUser(userCommand.Data.Member);
+            }
+
+            if (command is SocketMessageCommand messageCommand)
+            {
+                context.WithDiscordTargetMessage(messageCommand.Data.Message);
+            }
 
             await ActionRunner.RunActions(bot, Actions, context);
-            await slashCommand.RespondAsync(
+            await command.RespondAsync(
                 DefaultVariableProcessor.ProcessVariables(bot, Output.Text, context),
                 Output.GetParsedEmbeds(bot, context)?.ToArray(),
                 ephemeral: Output.Ephemeral

@@ -94,7 +94,7 @@ namespace CrackersBot.Core.Auditing
 
         public static Embed? GetMessageUpdatedMessage(IBotCore bot, IMessage message, string originalMessage)
         {
-            var updatedMessage = message.ToString();
+            var updatedMessage = message.Content;
             var embed = new EmbedInstance()
             {
                 Title = "Message Updated",
@@ -112,7 +112,7 @@ namespace CrackersBot.Core.Auditing
 
         public static Embed? GetMessageDeletedMessage(IBotCore bot, IMessage message)
         {
-            var originalMessage = message.ToString();
+            var originalMessage = message.Content;
             var embed = new EmbedInstance()
             {
                 Title = "Message Deleted",

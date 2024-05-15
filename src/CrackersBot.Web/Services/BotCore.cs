@@ -47,6 +47,8 @@ namespace CrackersBot.Web.Services
 
             _discordSocketClient.Ready += OnClientReady;
             _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
+            _discordSocketClient.UserCommandExecuted += OnUserCommandExecuted;
+            _discordSocketClient.MessageCommandExecuted += OnMessageCommandExecuted;
             _discordSocketClient.PresenceUpdated += OnPresenceUpdated;
             _discordSocketClient.MessageReceived += OnMessageReceived;
             _discordSocketClient.MessageUpdated += OnMessageUpdated;
@@ -438,17 +440,47 @@ namespace CrackersBot.Web.Services
             }
         }
 
-        private async Task OnSlashCommandExecuted(SocketSlashCommand slashCommand)
+        private async Task OnSlashCommandExecuted(SocketSlashCommand command)
         {
             Debug.WriteLine("OnSlashCommandExecuted triggered");
 
-            if (slashCommand.GuildId.HasValue
-                && Guilds.TryGetValue(slashCommand.GuildId.Value, out var guild))
+            if (command.GuildId.HasValue
+                && Guilds.TryGetValue(command.GuildId.Value, out var guild))
             {
-                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == slashCommand.CommandName && c.Enabled);
+                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == command.CommandName && c.Enabled);
                 if (commandHandler is not null)
                 {
-                    await commandHandler.RunActions(this, slashCommand);
+                    await commandHandler.RunActions(this, command);
+                }
+            }
+        }
+
+        private async Task OnUserCommandExecuted(SocketUserCommand command)
+        {
+            Debug.WriteLine("OnUserCommandExecuted triggered");
+
+            if (command.GuildId.HasValue
+                && Guilds.TryGetValue(command.GuildId.Value, out var guild))
+            {
+                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == command.CommandName && c.Enabled);
+                if (commandHandler is not null)
+                {
+                    await commandHandler.RunActions(this, command);
+                }
+            }
+        }
+
+        private async Task OnMessageCommandExecuted(SocketMessageCommand command)
+        {
+            Debug.WriteLine("OnMessageCommandExecuted triggered");
+
+            if (command.GuildId.HasValue
+                && Guilds.TryGetValue(command.GuildId.Value, out var guild))
+            {
+                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == command.CommandName && c.Enabled);
+                if (commandHandler is not null)
+                {
+                    await commandHandler.RunActions(this, command);
                 }
             }
         }
@@ -557,7 +589,7 @@ namespace CrackersBot.Web.Services
                 // Honey... There's a bear at the door.
                 if (message.Author.Id == ZUNDERSCORE_USER_ID)
                 {
-                    await AdminCommandHandler.HandleDMCommandAsync(this, message.ToString() ?? String.Empty);
+                    await AdminCommandHandler.HandleDMCommandAsync(this, message.Content ?? String.Empty);
                 }
                 else
                 {
@@ -573,13 +605,13 @@ namespace CrackersBot.Web.Services
 
             if (oldMessage.HasValue)
             {
-                if (oldMessage.ToString() != message.ToString())
+                if (oldMessage.Value.Content != message.Content)
                 {
                     if (channel is ITextChannel textChannel)
                     {
                         var context = new RunContext()
                             .WithDiscordMessage(message)
-                            .WithPreviousMessageText(oldMessage.Value.ToString());
+                            .WithPreviousMessageText(oldMessage.Value.Content);
 
                         var guildId = textChannel.Guild.Id;
 
@@ -591,7 +623,7 @@ namespace CrackersBot.Web.Services
                                     _discordSocketClient,
                                     guild.GuildId,
                                     guild.AuditSettings.AuditChannelId,
-                                    AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.ToString() ?? String.Empty)
+                                    AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.Content ?? String.Empty)
                                 );
                             }
 

@@ -12,6 +12,7 @@ namespace CrackersBot.Core
             {
                 Metadata.TryAdd(CommonNames.DISCORD_USER_ID, user.Id.ToString());
                 Metadata.TryAdd(CommonNames.DISCORD_USER_NAME, user.Username);
+                Metadata.TryAdd(CommonNames.DISCORD_USER_GLOBAL_NAME, user.GlobalName);
                 Metadata.TryAdd(CommonNames.DISCORD_USER_STATUS, user.Status.ToString());
                 Metadata.TryAdd(CommonNames.DISCORD_USER_AVATAR_URL, user.GetAvatarUrl());
                 Metadata.TryAdd(CommonNames.IS_BOT, user.IsBot.ToString());
@@ -25,9 +26,9 @@ namespace CrackersBot.Core
                 {
                     var streamingActivity = user.Activities!.First(a => a.Type == ActivityType.Streaming) as StreamingGame;
 
-                    Metadata.TryAdd(CommonNames.STREAM_URL, streamingActivity!.Url.ToString());
-                    Metadata.TryAdd(CommonNames.STREAM_TITLE, streamingActivity!.Details.ToString());
-                    Metadata.TryAdd(CommonNames.GAME_NAME, streamingActivity!.Name.ToString());
+                    Metadata.TryAdd(CommonNames.STREAM_URL, streamingActivity!.Url);
+                    Metadata.TryAdd(CommonNames.STREAM_TITLE, streamingActivity!.Details);
+                    Metadata.TryAdd(CommonNames.GAME_NAME, streamingActivity!.Name);
                 }
 
                 var hasCustomStatus = user.Activities?.Any(a => a?.Type == ActivityType.CustomStatus) ?? false;
@@ -94,7 +95,7 @@ namespace CrackersBot.Core
             if (message is not null)
             {
                 Metadata.TryAdd(CommonNames.DISCORD_MESSAGE_ID, message.Id.ToString());
-                Metadata.TryAdd(CommonNames.MESSAGE_TEXT, message.ToString() ?? String.Empty);
+                Metadata.TryAdd(CommonNames.MESSAGE_TEXT, message.Content ?? String.Empty);
 
                 if (message.Channel is not null)
                 {
@@ -113,6 +114,34 @@ namespace CrackersBot.Core
         public RunContext WithPreviousMessageText(string? messageText)
         {
             Metadata.TryAdd(CommonNames.PREVIOUS_MESSAGE_TEXT, messageText ?? String.Empty);
+
+            return this;
+        }
+
+        public RunContext WithDiscordTargetUser(IUser? user)
+        {
+            if (user is not null)
+            {
+                Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_ID, user.Id.ToString());
+                Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_NAME, user.Username);
+                Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_GLOBAL_NAME, user.GlobalName);
+            }
+
+            return this;
+        }
+
+        public RunContext WithDiscordTargetMessage(IMessage? message)
+        {
+            if (message is not null)
+            {
+                Metadata.TryAdd(CommonNames.DISCORD_TARGET_MESSAGE_ID, message.Id.ToString());
+                Metadata.TryAdd(CommonNames.MESSAGE_TEXT, message.Content ?? String.Empty);
+
+                if (message.Author is not null)
+                {
+                    WithDiscordTargetUser(message.Author);
+                }
+            }
 
             return this;
         }
