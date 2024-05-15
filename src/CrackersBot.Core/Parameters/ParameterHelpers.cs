@@ -45,7 +45,9 @@ namespace CrackersBot.Core.Parameters
                 {
                     parsedParams.Add(paramName, value switch
                     {
+                        BooleanParameterType bpt => bpt.GetValue(stringVal),
                         UInt16ParameterType u16pt => u16pt.GetValue(stringVal),
+                        UInt32ParameterType u32pt => u32pt.GetValue(stringVal),
                         UInt64ParameterType u64pt => u64pt.GetValue(stringVal),
                         StringParameterType spt => spt.GetValue(stringVal),
                         ObjectParameterType opt => Convert.ChangeType(opt.GetValue(stringVal), opt.Type),

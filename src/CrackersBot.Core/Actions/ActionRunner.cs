@@ -40,7 +40,7 @@ namespace CrackersBot.Core.Actions
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex);
+                    Debug.WriteLine($"Error running action {instance.ActionId}. Error: {ex.Message}");
                 }
             }
         }
