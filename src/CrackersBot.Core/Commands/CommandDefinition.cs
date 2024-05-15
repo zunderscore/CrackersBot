@@ -41,6 +41,8 @@ namespace CrackersBot.Core.Commands
 
         public async Task RunActions(IBotCore bot, SocketCommandBase command)
         {
+            await command.DeferAsync(Output.Ephemeral);
+
             var context = new RunContext()
                 .WithDiscordUser(command.User)
                 .WithDiscordChannel(command.Channel);
@@ -56,7 +58,8 @@ namespace CrackersBot.Core.Commands
             }
 
             await ActionRunner.RunActions(bot, Actions, context);
-            await command.RespondAsync(
+
+            await command.FollowupAsync(
                 DefaultVariableProcessor.ProcessVariables(bot, Output.Text, context),
                 Output.GetParsedEmbeds(bot, context)?.ToArray(),
                 ephemeral: Output.Ephemeral

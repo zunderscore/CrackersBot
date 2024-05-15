@@ -605,7 +605,7 @@ namespace CrackersBot.Web.Services
 
             if (oldMessage.HasValue)
             {
-                if (oldMessage.Value.Content != message.Content)
+                if (!message.IsEphemeral() && oldMessage.Value.Content != message.Content)
                 {
                     if (channel is ITextChannel textChannel)
                     {
@@ -636,7 +636,7 @@ namespace CrackersBot.Web.Services
                 }
                 else
                 {
-                    Debug.WriteLine("Messages are identical; skipping events");
+                    Debug.WriteLine("Messages are identical, or message is ephemeral; skipping events");
                 }
             }
             else

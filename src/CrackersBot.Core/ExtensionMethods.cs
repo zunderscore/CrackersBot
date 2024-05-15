@@ -1,3 +1,4 @@
+using Discord;
 using Newtonsoft.Json;
 
 namespace CrackersBot
@@ -55,6 +56,11 @@ namespace CrackersBot
 
             components.Reverse();
             return $"{String.Join(", ", components[..^1])}, and {components[^1]}";
+        }
+
+        public static bool IsEphemeral(this IMessage message)
+        {
+            return message.Flags.HasValue && message.Flags.Value.HasFlag(MessageFlags.Ephemeral);
         }
     }
 }
