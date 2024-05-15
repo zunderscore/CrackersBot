@@ -12,7 +12,7 @@ namespace CrackersBot.Core
             {
                 Metadata.TryAdd(CommonNames.DISCORD_USER_ID, user.Id.ToString());
                 Metadata.TryAdd(CommonNames.DISCORD_USER_NAME, user.Username);
-                Metadata.TryAdd(CommonNames.DISCORD_USER_GLOBAL_NAME, user.GlobalName);
+                Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_GLOBAL_DISPLAY_NAME, user.GlobalName);
                 Metadata.TryAdd(CommonNames.DISCORD_USER_STATUS, user.Status.ToString());
                 Metadata.TryAdd(CommonNames.DISCORD_USER_AVATAR_URL, user.GetAvatarUrl());
                 Metadata.TryAdd(CommonNames.IS_BOT, user.IsBot.ToString());
@@ -45,6 +45,8 @@ namespace CrackersBot.Core
 
                 if (user is IGuildUser guildUser)
                 {
+                    Metadata.TryAdd(CommonNames.DISCORD_USER_DISPLAY_NAME, guildUser.DisplayName);
+
                     WithDiscordGuild(guildUser.Guild);
                 }
             }
@@ -124,7 +126,12 @@ namespace CrackersBot.Core
             {
                 Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_ID, user.Id.ToString());
                 Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_NAME, user.Username);
-                Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_GLOBAL_NAME, user.GlobalName);
+                Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_GLOBAL_DISPLAY_NAME, user.GlobalName);
+
+                if (user is IGuildUser guildUser)
+                {
+                    Metadata.TryAdd(CommonNames.DISCORD_TARGET_USER_DISPLAY_NAME, guildUser.DisplayName);
+                }
             }
 
             return this;

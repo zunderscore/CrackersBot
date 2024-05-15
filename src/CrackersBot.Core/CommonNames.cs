@@ -15,10 +15,12 @@ namespace CrackersBot.Core
         public const string DISCORD_ROLE_ID = "DiscordRoleId";
         public const string DISCORD_TARGET_USER_ID = "DiscordTargetUserId";
         public const string DISCORD_TARGET_USER_NAME = "DiscordTargetUserName";
-        public const string DISCORD_TARGET_USER_GLOBAL_NAME = "DiscordTargetUserGlobalName";
+        public const string DISCORD_TARGET_USER_DISPLAY_NAME = "DiscordTargetUserDisplayName";
+        public const string DISCORD_TARGET_USER_GLOBAL_DISPLAY_NAME = "DiscordTargetUserGlobalDisplayName";
         public const string DISCORD_USER_ID = "DiscordUserId";
         public const string DISCORD_USER_NAME = "DiscordUserName";
-        public const string DISCORD_USER_GLOBAL_NAME = "DiscordUserGlobalName";
+        public const string DISCORD_USER_DISPLAY_NAME = "DiscordUserDisplayName";
+        public const string DISCORD_USER_GLOBAL_DISPLAY_NAME = "DiscordUserGlobalDisplayName";
         public const string DISCORD_USER_STATUS = "DiscordUserStatus";
         public const string DISCORD_USER_HAS_CUSTOM_STATUS = "DiscordUserHasCustomStatus";
         public const string DISCORD_USER_CUSTOM_STATUS = "DiscordUserCustomStatus";
