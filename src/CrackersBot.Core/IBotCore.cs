@@ -3,12 +3,15 @@ using CrackersBot.Core.Events;
 using CrackersBot.Core.Filters;
 using CrackersBot.Core.Variables;
 using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 
 namespace CrackersBot.Core
 {
     public interface IBotCore
     {
+        ILogger Logger { get; }
+
         DiscordSocketClient DiscordClient { get; }
 
         ConcurrentDictionary<ulong, GuildConfig> Guilds { get; }

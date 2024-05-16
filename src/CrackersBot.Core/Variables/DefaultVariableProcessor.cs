@@ -1,6 +1,5 @@
-using System.Diagnostics;
-using System.Reflection;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace CrackersBot.Core.Variables
 {
@@ -34,7 +33,7 @@ namespace CrackersBot.Core.Variables
 
             foreach (var token in GetVariableTokens(value))
             {
-                Debug.WriteLine($"Token: {token}");
+                bot.Logger.LogDebug("Found potential token: {token}", token);
 
                 if (bot.RegisteredVariables.TryGetValue(token, out IVariable? variable))
                 {

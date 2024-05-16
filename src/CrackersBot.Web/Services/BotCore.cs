@@ -1,29 +1,27 @@
 using CrackersBot.Core;
 using CrackersBot.Core.Actions;
-using CrackersBot.Core.Auditing;
 using CrackersBot.Core.Events;
-using CrackersBot.Core.Events.Discord;
 using CrackersBot.Core.Filters;
 using CrackersBot.Core.Variables;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Azure.Cosmos;
-using Microsoft.Azure.Cosmos.Linq;
 using System.Collections.Concurrent;
-using System.Diagnostics;
 
 namespace CrackersBot.Web.Services
 {
-    public class BotCore : IBotCore
+    public partial class BotCore : IBotCore
     {
         private const ulong ZUNDERSCORE_USER_ID = 209052262671187968;
 
         private readonly IConfiguration _config;
         private readonly DiscordSocketClient _discordSocketClient;
+        private readonly ILogger _logger;
 
-        public BotCore(IConfiguration config)
+        public BotCore(IConfiguration config, ILogger<BotCore> logger)
         {
             _config = config;
+            _logger = logger;
             _discordSocketClient = new DiscordSocketClient(new DiscordSocketConfig()
             {
                 MessageCacheSize = 50,
@@ -31,6 +29,8 @@ namespace CrackersBot.Web.Services
                 AlwaysDownloadUsers = true
             });
         }
+
+        public ILogger Logger => _logger;
 
         public DiscordSocketClient DiscordClient => _discordSocketClient;
 
@@ -45,16 +45,7 @@ namespace CrackersBot.Web.Services
             RegisterCoreEventHandlers();
             RegisterCoreFilters();
 
-            _discordSocketClient.Ready += OnClientReady;
-            _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
-            _discordSocketClient.UserCommandExecuted += OnUserCommandExecuted;
-            _discordSocketClient.MessageCommandExecuted += OnMessageCommandExecuted;
-            _discordSocketClient.PresenceUpdated += OnPresenceUpdated;
-            _discordSocketClient.MessageReceived += OnMessageReceived;
-            _discordSocketClient.MessageUpdated += OnMessageUpdated;
-            _discordSocketClient.MessageDeleted += OnMessageDeleted;
-            _discordSocketClient.UserJoined += OnUserJoined;
-            _discordSocketClient.UserLeft += OnUserLeft;
+            SetupEventListeners();
 
             await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
             await _discordSocketClient.StartAsync();
@@ -88,7 +79,7 @@ namespace CrackersBot.Web.Services
             }
             catch (Exception ex)
             {
-                Debug.WriteLine(ex.Message);
+                Logger.LogError(ex, "Error loading guild configs");
             }
         }
 
@@ -108,7 +99,7 @@ namespace CrackersBot.Web.Services
                     }
                     else
                     {
-                        Debug.WriteLine($"No guild config found for guild ID {guildId}");
+                        Logger.LogDebug("No guild config found for guild ID {guildId}", guildId);
                     }
                 }
             }
@@ -142,7 +133,7 @@ namespace CrackersBot.Web.Services
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Unable to setup guild commands for guild {guild.GuildId}. Error: {ex.Message}");
+                    Logger.LogError(ex, "Unable to setup guild commands for guild {guildId}", guild.GuildId);
                 }
             }
         }
@@ -180,17 +171,17 @@ namespace CrackersBot.Web.Services
 
             if (IsActionRegistered(id))
             {
-                Debug.WriteLine($"Unable to register Action {id} as it has already been registered");
+                Logger.LogDebug("Unable to register Action {id} as it has already been registered", id);
                 return;
             }
 
             if (RegisteredActions.TryAdd(id, action))
             {
-                Debug.WriteLine($"Registered Action {id}");
+                Logger.LogDebug("Registered Action {id}", id);
             }
             else
             {
-                Debug.WriteLine($"Unable to register Action {id} (registration failed)");
+                Logger.LogDebug("Unable to register Action {id} (registration failed)", id);
             }
         }
 
@@ -198,17 +189,17 @@ namespace CrackersBot.Web.Services
         {
             if (!IsActionRegistered(id))
             {
-                Debug.WriteLine($"Unable to unregister Action {id} since it is not currently registered");
+                Logger.LogDebug("Unable to unregister Action {id} since it is not currently registered", id);
                 return;
             }
 
             if (RegisteredActions.TryRemove(id, out _))
             {
-                Debug.WriteLine($"Unregistered Action {id}");
+                Logger.LogDebug("Unregistered Action {id}", id);
             }
             else
             {
-                Debug.WriteLine($"Unable to unregister Action {id} (removal failed)");
+                Logger.LogDebug("Unable to unregister Action {id} (removal failed)", id);
             }
         }
 
@@ -237,17 +228,17 @@ namespace CrackersBot.Web.Services
         {
             if (IsVariableRegistered(variable.Token))
             {
-                Debug.WriteLine($"Unable to register Variable {variable.Token} as it has already been registered");
+                Logger.LogDebug("Unable to register Variable {token} as it has already been registered", variable.Token);
                 return;
             }
 
             if (RegisteredVariables.TryAdd(variable.Token, variable))
             {
-                Debug.WriteLine($"Registered Variable {variable.Token}");
+                Logger.LogDebug("Registered Variable {token}", variable.Token);
             }
             else
             {
-                Debug.WriteLine($"Unable to register Variable {variable.Token} (registration failed)");
+                Logger.LogDebug("Unable to register Variable {token} (registration failed)", variable.Token);
             }
         }
 
@@ -255,17 +246,17 @@ namespace CrackersBot.Web.Services
         {
             if (!IsVariableRegistered(token))
             {
-                Debug.WriteLine($"Unable to unregister Variable {token} since it is not currently registered");
+                Logger.LogDebug("Unable to unregister Variable {token} since it is not currently registered", token);
                 return;
             }
 
             if (RegisteredVariables.TryRemove(token, out _))
             {
-                Debug.WriteLine($"Unregistered Variable {token}");
+                Logger.LogDebug("Unregistered Variable {token}", token);
             }
             else
             {
-                Debug.WriteLine($"Unable to unregister Variable {token} (removal failed)");
+                Logger.LogDebug("Unable to unregister Variable {token} (removal failed)", token);
             }
         }
 
@@ -286,35 +277,35 @@ namespace CrackersBot.Web.Services
 
             if (IsEventHandlerRegistered(id))
             {
-                Debug.WriteLine($"Unable to register Event Handler {id} as it has already been registered");
+                Logger.LogDebug("Unable to register Event Handler {id} as it has already been registered", id);
                 return;
             }
 
             if (RegisteredEventHandlers.TryAdd(id, handler))
             {
-                Debug.WriteLine($"Registered Event Handler {id}");
+                Logger.LogDebug("Registered Event Handler {id}", id);
             }
             else
             {
-                Debug.WriteLine($"Unable to register Event Handler {id} (registration failed)");
+                Logger.LogDebug("Unable to register Event Handler {id} (registration failed)", id);
             }
         }
 
-        public void UnregisterEventHandler(string token)
+        public void UnregisterEventHandler(string id)
         {
-            if (!IsEventHandlerRegistered(token))
+            if (!IsEventHandlerRegistered(id))
             {
-                Debug.WriteLine($"Unable to unregister Event Handler {token} since it is not currently registered");
+                Logger.LogDebug("Unable to unregister Event Handler {id} since it is not currently registered", id);
                 return;
             }
 
-            if (RegisteredEventHandlers.TryRemove(token, out _))
+            if (RegisteredEventHandlers.TryRemove(id, out _))
             {
-                Debug.WriteLine($"Unregistered Event Handler {token}");
+                Logger.LogDebug("Unregistered Event Handler {id}", id);
             }
             else
             {
-                Debug.WriteLine($"Unable to unregister Event Handler {token} (removal failed)");
+                Logger.LogDebug("Unable to unregister Event Handler {id} (removal failed)", id);
             }
         }
 
@@ -335,35 +326,35 @@ namespace CrackersBot.Web.Services
 
             if (IsFilterRegistered(id))
             {
-                Debug.WriteLine($"Unable to register Filter {id} as it has already been registered");
+                Logger.LogDebug("Unable to register Filter {id} as it has already been registered", id);
                 return;
             }
 
             if (RegisteredFilters.TryAdd(id, filter))
             {
-                Debug.WriteLine($"Registered Filter {id}");
+                Logger.LogDebug("Registered Filter {id}", id);
             }
             else
             {
-                Debug.WriteLine($"Unable to register Filter {id} (registration failed)");
+                Logger.LogDebug("Unable to register Filter {id} (registration failed)", id);
             }
         }
 
-        public void UnregisterFilter(string token)
+        public void UnregisterFilter(string id)
         {
-            if (!IsFilterRegistered(token))
+            if (!IsFilterRegistered(id))
             {
-                Debug.WriteLine($"Unable to unregister Filter {token} since it is not currently registered");
+                Logger.LogDebug("Unable to unregister Filter {id} since it is not currently registered", id);
                 return;
             }
 
-            if (RegisteredFilters.TryRemove(token, out _))
+            if (RegisteredFilters.TryRemove(id, out _))
             {
-                Debug.WriteLine($"Unregistered Filter {token}");
+                Logger.LogDebug("Unregistered Filter {id}", id);
             }
             else
             {
-                Debug.WriteLine($"Unable to unregister Filter {token} (removal failed)");
+                Logger.LogDebug("Unable to unregister Filter {id} (removal failed)", id);
             }
         }
 
@@ -404,340 +395,5 @@ namespace CrackersBot.Web.Services
         }
 
         #endregion
-
-        // Bot events
-
-        private async Task OnClientReady()
-        {
-            await Task.Run(() => Debug.WriteLine("Client ready!"));
-            await LoadGuildConfigsAsync();
-            await OnBotStarted();
-            return;
-        }
-
-        // Default event handlers
-
-        private async Task OnBotStarted()
-        {
-            Debug.WriteLine("OnBotStarted triggered");
-            var eventId = BotStartedEventHandler.EVENT_ID;
-
-            foreach (var (_, guild) in Guilds)
-            {
-                foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                {
-                    await RegisteredEventHandlers[eventId].Handle(this, instance, new RunContext());
-                }
-            }
-
-            try
-            {
-                await SendMessageToTheCaptainAsync(AdminCommandHandler.GetStartupMessageEmbed(this));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"Unable to send BotStarted DM. Error: {ex.Message}");
-            }
-        }
-
-        private async Task OnSlashCommandExecuted(SocketSlashCommand command)
-        {
-            Debug.WriteLine("OnSlashCommandExecuted triggered");
-
-            if (command.GuildId.HasValue
-                && Guilds.TryGetValue(command.GuildId.Value, out var guild))
-            {
-                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == command.CommandName && c.Enabled);
-                if (commandHandler is not null)
-                {
-                    await commandHandler.RunActions(this, command);
-                }
-            }
-        }
-
-        private async Task OnUserCommandExecuted(SocketUserCommand command)
-        {
-            Debug.WriteLine("OnUserCommandExecuted triggered");
-
-            if (command.GuildId.HasValue
-                && Guilds.TryGetValue(command.GuildId.Value, out var guild))
-            {
-                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == command.CommandName && c.Enabled);
-                if (commandHandler is not null)
-                {
-                    await commandHandler.RunActions(this, command);
-                }
-            }
-        }
-
-        private async Task OnMessageCommandExecuted(SocketMessageCommand command)
-        {
-            Debug.WriteLine("OnMessageCommandExecuted triggered");
-
-            if (command.GuildId.HasValue
-                && Guilds.TryGetValue(command.GuildId.Value, out var guild))
-            {
-                var commandHandler = guild.Commands.FirstOrDefault(c => c.Name == command.CommandName && c.Enabled);
-                if (commandHandler is not null)
-                {
-                    await commandHandler.RunActions(this, command);
-                }
-            }
-        }
-
-        private async Task OnPresenceUpdated(SocketUser user, SocketPresence oldPresence, SocketPresence newPresence)
-        {
-            Debug.WriteLine("OnPresenceUpdated triggered");
-            var eventId = UserPresenceUpdatedEventHandler.EVENT_ID;
-
-            var wasStreaming = oldPresence?.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
-            var isStreaming = newPresence?.Activities?.Any(a => a?.Type == ActivityType.Streaming) ?? false;
-
-            var startedStreaming = !wasStreaming && isStreaming;
-            var stoppedStreaming = wasStreaming && !isStreaming;
-
-            foreach (var (guildId, guild) in Guilds)
-            {
-                var socketGuild = _discordSocketClient.GetGuild(guildId);
-
-                if (socketGuild.Users.Any(u => u.Id == user.Id))
-                {
-                    var context = new RunContext()
-                        .WithDiscordGuild(socketGuild)
-                        .WithDiscordUser(user);
-
-                    foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                    {
-                        await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                    }
-
-                    if (startedStreaming)
-                    {
-                        eventId = UserStartedStreamingEventHandler.EVENT_ID;
-
-                        if (guild.AuditSettings.UserStartedStreaming)
-                        {
-                            await AuditHelpers.SendAuditMessageAsync(
-                                _discordSocketClient,
-                                guild.GuildId,
-                                guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetUserStartedStreamingMessage(this, user)
-                            );
-                        }
-
-                        foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                        {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                        }
-                    }
-
-                    if (stoppedStreaming)
-                    {
-                        eventId = UserStoppedStreamingEventHandler.EVENT_ID;
-
-                        if (guild.AuditSettings.UserStoppedStreaming)
-                        {
-                            await AuditHelpers.SendAuditMessageAsync(
-                                _discordSocketClient,
-                                guild.GuildId,
-                                guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetUserStoppedStreamingMessage(this, user)
-                            );
-                        }
-
-
-                        foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                        {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                        }
-                    }
-                }
-            }
-        }
-
-        private async Task OnMessageReceived(SocketMessage message)
-        {
-            if (message.Author.Id == _discordSocketClient.CurrentUser.Id)
-            {
-                // Ignore messages from the bot itself
-                return;
-            }
-
-            Debug.WriteLine("OnMessageReceived triggered");
-            var eventId = MessageReceivedEventHandler.EVENT_ID;
-
-            if (message.Channel is SocketTextChannel textChannel)
-            {
-                var context = new RunContext()
-                    .WithDiscordMessage(message);
-
-                var guildId = textChannel.Guild.Id;
-
-                if (Guilds.TryGetValue(guildId, out var guild))
-                {
-                    foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                    {
-                        await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                    }
-                }
-            }
-            else if (message.Channel is SocketDMChannel dmChannel)
-            {
-                var context = new RunContext()
-                    .WithDiscordMessage(message);
-
-                // Honey... There's a bear at the door.
-                if (message.Author.Id == ZUNDERSCORE_USER_ID)
-                {
-                    await AdminCommandHandler.HandleDMCommandAsync(this, message.Content ?? String.Empty);
-                }
-                else
-                {
-                    await dmChannel.SendMessageAsync("SQUAK! Sorry, I only talk to the cap'n.");
-                }
-            }
-        }
-
-        private async Task OnMessageUpdated(Cacheable<IMessage, ulong> oldMessage, SocketMessage message, ISocketMessageChannel channel)
-        {
-            Debug.WriteLine("OnMessageUpdated triggered");
-            var eventId = MessageUpdatedEventHandler.EVENT_ID;
-
-            if (oldMessage.HasValue)
-            {
-                if (!message.IsEphemeral() && oldMessage.Value.Content != message.Content)
-                {
-                    if (channel is ITextChannel textChannel)
-                    {
-                        var context = new RunContext()
-                            .WithDiscordMessage(message)
-                            .WithPreviousMessageText(oldMessage.Value.Content);
-
-                        var guildId = textChannel.Guild.Id;
-
-                        if (Guilds.TryGetValue(guildId, out var guild))
-                        {
-                            if (guild.AuditSettings.MessageUpdated && guild.AuditSettings.ShouldSendAuditMessage(message.Channel.Id))
-                            {
-                                await AuditHelpers.SendAuditMessageAsync(
-                                    _discordSocketClient,
-                                    guild.GuildId,
-                                    guild.AuditSettings.AuditChannelId,
-                                    AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.Content ?? String.Empty)
-                                );
-                            }
-
-                            foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                            {
-                                await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    Debug.WriteLine("Messages are identical, or message is ephemeral; skipping events");
-                }
-            }
-            else
-            {
-                Debug.WriteLine("Unable to retrieve original contents of edited message from cache; skipping events");
-            }
-        }
-
-        private async Task OnMessageDeleted(Cacheable<IMessage, ulong> message, Cacheable<IMessageChannel, ulong> channel)
-        {
-            Debug.WriteLine("OnMessageDeleted triggered");
-            var eventId = MessageDeletedEventHandler.EVENT_ID;
-
-            if (message.HasValue && channel.HasValue)
-            {
-                if (channel.Value is ITextChannel textChannel)
-                {
-                    var context = new RunContext()
-                        .WithDiscordMessage(message.Value);
-
-                    var guildId = textChannel.Guild.Id;
-
-                    if (Guilds.TryGetValue(guildId, out var guild))
-                    {
-                        if (guild.AuditSettings.MessageDeleted && guild.AuditSettings.ShouldSendAuditMessage(channel.Id))
-                        {
-                            await AuditHelpers.SendAuditMessageAsync(
-                                _discordSocketClient,
-                                guild.GuildId,
-                                guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetMessageDeletedMessage(this, message.Value)
-                            );
-                        }
-
-                        foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                        {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                Debug.WriteLine("Unable to retrieve deleted message from cache; skipping events");
-            }
-        }
-
-        private async Task OnUserJoined(SocketGuildUser user)
-        {
-            Debug.WriteLine($"OnUserJoined triggered. Guild: {user.Guild.Name} ({user.Guild.Id}). User: {user.Username} ({user.Id})");
-            var eventId = UserJoinedEventHandler.EVENT_ID;
-
-            var context = new RunContext()
-                .WithDiscordGuild(user.Guild)
-                .WithDiscordUser(user);
-
-            if (Guilds.TryGetValue(user.Guild.Id, out var guild))
-            {
-                if (guild.AuditSettings.UserJoined)
-                {
-                    await AuditHelpers.SendAuditMessageAsync(
-                        _discordSocketClient,
-                        guild.GuildId,
-                        guild.AuditSettings.AuditChannelId,
-                        AuditHelpers.GetUserJoinedMessage(this, user)
-                    );
-                }
-
-                foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                {
-                    await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                }
-            }
-        }
-
-        private async Task OnUserLeft(SocketGuild socketGuild, SocketUser user)
-        {
-            Debug.WriteLine($"OnUserLeft triggered. Guild: {socketGuild.Name} ({socketGuild.Id}). User: {user.Username} ({user.Id})");
-            var eventId = UserLeftEventHandler.EVENT_ID;
-
-            var context = new RunContext()
-                .WithDiscordGuild(socketGuild)
-                .WithDiscordUser(user);
-
-            if (Guilds.TryGetValue(socketGuild.Id, out var guild))
-            {
-                if (guild.AuditSettings.UserLeft)
-                {
-                    await AuditHelpers.SendAuditMessageAsync(
-                        _discordSocketClient,
-                        guild.GuildId,
-                        guild.AuditSettings.AuditChannelId,
-                        AuditHelpers.GetUserLeftMessage(this, user)
-                    );
-                }
-
-                foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
-                {
-                    await RegisteredEventHandlers[eventId].Handle(this, instance, context);
-                }
-            }
-        }
     }
 }

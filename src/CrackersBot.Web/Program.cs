@@ -1,5 +1,16 @@
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders();
+
+if (System.Diagnostics.Debugger.IsAttached)
+{
+    builder.Logging.AddDebug();
+}
+else
+{
+    builder.Logging.AddConsole();
+}
+
 if (!builder.Environment.IsDevelopment())
 {
     builder.Configuration.AddAzureKeyVault(

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+using Microsoft.Extensions.Logging;
 
 namespace CrackersBot.Core.Filters
 {
@@ -29,7 +29,7 @@ namespace CrackersBot.Core.Filters
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex);
+                    bot.Logger.LogError(ex, "Error running filter {filterId}", filter.FilterId);
                     return false;
                 }
             }

@@ -1,14 +1,13 @@
-using System.Diagnostics;
 using CrackersBot.Core.Actions.Discord;
 using Discord;
-using Discord.WebSocket;
+using Microsoft.Extensions.Logging;
 
 namespace CrackersBot.Core.Auditing
 {
     public static class AuditHelpers
     {
         public static async Task SendAuditMessageAsync(
-            DiscordSocketClient client,
+            IBotCore bot,
             ulong guildId,
             ulong? channelId,
             Embed? embed
@@ -18,12 +17,12 @@ namespace CrackersBot.Core.Auditing
 
             try
             {
-                var channel = client.GetGuild(guildId).GetTextChannel(channelId.Value);
+                var channel = bot.DiscordClient.GetGuild(guildId).GetTextChannel(channelId.Value);
                 await channel.SendMessageAsync(embed: embed);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Unable to send audit message. Error: {ex.Message}");
+                bot.Logger.LogError(ex, "Unable to send audit message");
             }
         }
 

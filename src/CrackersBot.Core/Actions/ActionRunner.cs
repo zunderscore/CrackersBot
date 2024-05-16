@@ -1,7 +1,7 @@
-using System.Diagnostics;
 using CrackersBot.Core.Filters;
 using CrackersBot.Core.Parameters;
 using CrackersBot.Core.Variables;
+using Microsoft.Extensions.Logging;
 
 namespace CrackersBot.Core.Actions
 {
@@ -31,7 +31,7 @@ namespace CrackersBot.Core.Actions
 
                         if (action.DoPreRunCheck(bot, processedParams))
                         {
-                            Debug.WriteLine($"Attempting to run action {instance.ActionId}");
+                            bot.Logger.LogDebug("Attempting to run action {instance.ActionId}", instance.ActionId);
 
                             var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
                             await action.Run(bot, parsedParams, context);
@@ -40,7 +40,11 @@ namespace CrackersBot.Core.Actions
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"Error running action {instance.ActionId}. Error: {ex.Message}");
+                    bot.Logger.LogError(
+                        ex,
+                        "Error running action {instance.ActionId}",
+                        instance.ActionId
+                    );
                 }
             }
         }

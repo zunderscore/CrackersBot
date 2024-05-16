@@ -1,5 +1,5 @@
-using System.Diagnostics;
 using CrackersBot.Core.Parameters;
+using Microsoft.Extensions.Logging;
 
 namespace CrackersBot.Core.Actions.Discord
 {
@@ -24,13 +24,19 @@ namespace CrackersBot.Core.Actions.Discord
                 var guildId = (ulong)parameters[CommonNames.DISCORD_GUILD_ID];
                 var roleId = (ulong)parameters[CommonNames.DISCORD_ROLE_ID];
 
-                Debug.WriteLine($"Attempting to add user {userId} to role {roleId} in guild {guildId}");
+                bot.Logger.LogDebug("Attempting to add user {userId} to role {roleId} in guild {guildId}", userId, roleId, guildId);
 
                 await bot.DiscordClient.GetGuild(guildId).GetUser(userId).AddRoleAsync(roleId);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Error adding role {parameters[CommonNames.DISCORD_ROLE_ID]} in guild {parameters[CommonNames.DISCORD_GUILD_ID]} to user {parameters[CommonNames.DISCORD_USER_ID]}: {ex.Message}");
+                bot.Logger.LogError(
+                    ex,
+                    "Error adding role {roleId} in guild {guildId} to user {userId}",
+                    parameters[CommonNames.DISCORD_ROLE_ID],
+                    parameters[CommonNames.DISCORD_GUILD_ID],
+                    parameters[CommonNames.DISCORD_USER_ID]
+                );
             }
         }
     }
