@@ -34,14 +34,14 @@ namespace CrackersBot
                 case DatePart.Minute:
                     if (timeSpan.Minutes > 0)
                     {
-                        components.Add($"{timeSpan.Minutes} minutes{(timeSpan.Minutes > 1 ? "s" : "")}");
+                        components.Add($"{timeSpan.Minutes} minute{(timeSpan.Minutes > 1 ? "s" : "")}");
                     }
                     goto case DatePart.Hour;
 
                 case DatePart.Hour:
                     if (timeSpan.Hours > 0)
                     {
-                        components.Add($"{timeSpan.Hours} hours{(timeSpan.Hours > 1 ? "s" : "")}");
+                        components.Add($"{timeSpan.Hours} hour{(timeSpan.Hours > 1 ? "s" : "")}");
                     }
                     goto case DatePart.Day;
 
@@ -49,13 +49,19 @@ namespace CrackersBot
                 default:
                     if (timeSpan.Days > 0)
                     {
-                        components.Add($"{timeSpan.Days} days{(timeSpan.Days > 1 ? "s" : "")}");
+                        components.Add($"{timeSpan.Days} day{(timeSpan.Days > 1 ? "s" : "")}");
                     }
                     break;
             }
 
             components.Reverse();
-            return $"{String.Join(", ", components[..^1])}, and {components[^1]}";
+            return components.Count switch
+            {
+                0 => $"0 {minUnit.ToString().ToLowerInvariant()}s",
+                1 => components[0],
+                2 => $"{components[0]} and {components[1]}",
+                _ => $"{String.Join(", ", components[..^1])}, and {components[^1]}"
+            };
         }
 
         public static bool IsEphemeral(this IMessage message)
