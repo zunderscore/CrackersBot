@@ -34,6 +34,8 @@ namespace CrackersBot.Web.Services
 
         public DiscordSocketClient DiscordClient => _discordSocketClient;
 
+        internal DateTime StartupTime { get; } = DateTime.UtcNow;
+
         public ConcurrentDictionary<ulong, GuildConfig> Guilds { get; } = new();
 
         #region Core Functions
