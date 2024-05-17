@@ -18,9 +18,10 @@ namespace CrackersBot.Core.Actions.Discord
         public string? Footer { get; set; }
         public List<EmbedField>? Fields { get; set; }
 
-        public Embed BuildDiscordEmbed(IBotCore bot, RunContext context)
+        public Embed BuildDiscordEmbed(IBotCore bot, RunContext? context = null)
         {
             var builder = new EmbedBuilder();
+            context ??= new();
 
             var title = DefaultVariableProcessor.ProcessVariables(bot, Title, context);
             if (!String.IsNullOrWhiteSpace(title))
