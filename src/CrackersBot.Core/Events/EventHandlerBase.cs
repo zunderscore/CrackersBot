@@ -4,29 +4,29 @@ using System.Reflection;
 
 namespace CrackersBot.Core.Events
 {
-    public abstract class EventHandlerBase : IEventHandler
+    public abstract class EventHandlerBase(IBotCore bot) : IEventHandler
     {
-        public string GetEventId() => GetType().GetCustomAttribute<EventIdAttribute>()?.Id ?? String.Empty;
-        public string GetEventName() => GetType().GetCustomAttribute<EventNameAttribute>()?.Name ?? String.Empty;
-        public string GetEventDescription() => GetType().GetCustomAttribute<EventDescriptionAttribute>()?.Description ?? String.Empty;
+        public IBotCore Bot { get; } = bot;
+
+        public string GetId() => GetType().GetCustomAttribute<EventIdAttribute>()?.Id ?? String.Empty;
+        public string GetName() => GetType().GetCustomAttribute<EventNameAttribute>()?.Name ?? String.Empty;
+        public string GetDescription() => GetType().GetCustomAttribute<EventDescriptionAttribute>()?.Description ?? String.Empty;
 
         public virtual async Task Handle(
-            IBotCore bot,
             IEnumerable<ActionInstance> actions,
             RunContext context,
             IEnumerable<FilterInstance>? filters = null,
             FilterMode filterMode = FilterMode.All
         )
         {
-            if (!FilterHelpers.CheckFilters(bot, filters ?? [], filterMode, context)) return;
+            if (!FilterHelpers.CheckFilters(Bot, filters ?? [], filterMode, context)) return;
 
-            await RunActions(bot, actions, context);
+            await RunActions(actions, context);
         }
 
         public async Task RunActions(
-            IBotCore bot,
             IEnumerable<ActionInstance> actions,
             RunContext context
-        ) => await ActionRunner.RunActions(bot, actions, context);
+        ) => await ActionRunner.RunActions(Bot, actions, context);
     }
 }

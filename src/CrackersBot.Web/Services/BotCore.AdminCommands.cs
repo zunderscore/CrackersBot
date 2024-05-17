@@ -3,28 +3,28 @@ using Discord;
 
 namespace CrackersBot.Web.Services
 {
-    internal static class AdminCommandHandler
+    public partial class BotCore
     {
         private const string ACCENT_COLOR = "#0066FF";
         private const string ACCENT_COLOR_ERROR = "#FF0000";
 
-        public static Embed GetStartupMessageEmbed(BotCore bot)
+        public Embed GetStartupMessageEmbed()
         {
             return new EmbedInstance()
             {
                 Title = "CrackersBot is online!",
                 Color = ACCENT_COLOR,
                 Fields = [
-                    new("Actions", $"Registered actions: {bot.RegisteredActions.Count}"),
-                    new("Variables", $"Registered variables: {bot.RegisteredVariables.Count}"),
-                    new("Filters", $"Registered filters: {bot.RegisteredFilters.Count}"),
-                    new("Event Handlers", $"Registered event handlers: {bot.RegisteredEventHandlers.Count}"),
-                    new("Guilds", $"Guild configurations loaded: {bot.Guilds.Count}"),
+                    new("Actions", $"Registered actions: {RegisteredActions.Count}"),
+                    new("Variables", $"Registered variables: {RegisteredVariables.Count}"),
+                    new("Filters", $"Registered filters: {RegisteredFilters.Count}"),
+                    new("Event Handlers", $"Registered event handlers: {RegisteredEventHandlers.Count}"),
+                    new("Guilds", $"Guild configurations loaded: {Guilds.Count}"),
                 ]
-            }.BuildDiscordEmbed(bot, new());
+            }.BuildDiscordEmbed();
         }
 
-        public static async Task HandleDMCommandAsync(BotCore bot, string message)
+        public async Task HandleDMCommandAsync(string message)
         {
             var messageParts = message.Split(' ');
 
@@ -35,11 +35,11 @@ namespace CrackersBot.Web.Services
                 switch (keyword)
                 {
                     case "ping":
-                        await bot.SendMessageToTheCaptainAsync("PONG!");
+                        await SendMessageToTheCaptainAsync("PONG!");
                         break;
 
                     case "status":
-                        await SendStatusMessage(bot, messageParts[1..]);
+                        await SendStatusMessage(messageParts[1..]);
                         break;
 
                     case "reload":
@@ -49,42 +49,48 @@ namespace CrackersBot.Web.Services
                             switch (reloadKeyword)
                             {
                                 case "configs":
-                                    await ReloadGuildsAsync(bot);
+                                    await ReloadGuildsAsync();
                                     break;
 
                                 case "guild":
-                                    await ReloadGuildConfigAsync(bot, messageParts[2..]);
+                                    await ReloadGuildConfigAsync(messageParts[2..]);
                                     break;
 
                                 default:
-                                    await bot.SendMessageToTheCaptainAsync($"I would, but I don't know what {reloadKeyword} is");
+                                    await SendMessageToTheCaptainAsync(
+                                        BuildErrorMessage("Reload", $"Unknown reload type **{reloadKeyword}**")
+                                    );
                                     break;
                             }
                         }
                         else
                         {
-                            await bot.SendMessageToTheCaptainAsync("I need to know what to reload. Try again.");
+                            await SendMessageToTheCaptainAsync(
+                                BuildErrorMessage("Reload", "Please specify an item to reload")
+                            );
                         }
                         break;
 
                     default:
-                        await bot.SendMessageToTheCaptainAsync("That's cool I guess");
+                        await SendMessageToTheCaptainAsync(
+                            BuildErrorMessage("Unknown Command", "I don't know what that means")
+                        );
                         break;
                 }
             }
         }
 
-        private static Embed BuildErrorMessage(BotCore bot, string title, string message)
+        private Embed BuildErrorMessage(string title, string message)
         {
             return new EmbedInstance()
             {
                 Title = title,
                 Description = message,
                 Color = ACCENT_COLOR_ERROR
-            }.BuildDiscordEmbed(bot);
+            }.BuildDiscordEmbed();
         }
 
-        private static async Task SendStatusMessage(BotCore bot, string[] parameters)
+        private async Task SendStatusMessage(string[] parameters)
         {
             if (parameters.Length == 0)
             {
@@ -93,13 +99,13 @@ namespace CrackersBot.Web.Services
                     Title = "CrackersBot Status",
                     Color = ACCENT_COLOR,
                     Fields = [
-                        new("Started", $"{bot.StartupTime:F} UTC"),
-                        new("Uptime", DateTime.UtcNow.Subtract(bot.StartupTime).ToHumanReadableString()),
-                        new("Guilds Connected", bot.DiscordClient.Guilds.Count.ToString())
+                        new("Started", $"{StartupTime:F} UTC"),
+                        new("Uptime", DateTime.UtcNow.Subtract(StartupTime).ToHumanReadableString()),
+                        new("Guilds Connected", DiscordClient.Guilds.Count.ToString())
                     ]
-                }.BuildDiscordEmbed(bot);
+                }.BuildDiscordEmbed();
 
-                await bot.SendMessageToTheCaptainAsync(embed);
+                await SendMessageToTheCaptainAsync(embed);
             }
             else
             {
@@ -112,11 +118,11 @@ namespace CrackersBot.Web.Services
                         {
                             Title = "Connected Guilds",
                             Color = ACCENT_COLOR,
-                            Fields = bot.DiscordClient.Guilds
+                            Fields = DiscordClient.Guilds
                                 .Select(g => new Core.Actions.Discord.EmbedField(g.Name, g.Id.ToString(), true))
                                 .ToList()
-                        }.BuildDiscordEmbed(bot);
-                        await bot.SendMessageToTheCaptainAsync(guildsEmbed);
+                        }.BuildDiscordEmbed();
+                        await SendMessageToTheCaptainAsync(guildsEmbed);
                         break;
 
                     case "guild":
@@ -124,36 +130,36 @@ namespace CrackersBot.Web.Services
                         {
                             if (UInt64.TryParse(parameters[1], out var guildId))
                             {
-                                await bot.SendMessageToTheCaptainAsync(GetGuildStatus(bot, guildId));
+                                await SendMessageToTheCaptainAsync(GetGuildStatus(guildId));
                             }
                             else
                             {
-                                await bot.SendMessageToTheCaptainAsync(
-                                    BuildErrorMessage(bot, "Guild Status", "Invalid guild ID specified")
+                                await SendMessageToTheCaptainAsync(
+                                    BuildErrorMessage("Guild Status", "Invalid guild ID specified")
                                 );
                             }
                         }
                         else
                         {
-                            await bot.SendMessageToTheCaptainAsync(
-                                BuildErrorMessage(bot, "Guild Status", "You must specify a guild ID")
+                            await SendMessageToTheCaptainAsync(
+                                BuildErrorMessage("Guild Status", "You must specify a guild ID")
                             );
                         }
 
                         break;
 
                     default:
-                        await bot.SendMessageToTheCaptainAsync($"Unknown status type {statusType}");
+                        await SendMessageToTheCaptainAsync($"Unknown status type {statusType}");
                         break;
                 }
             }
         }
 
-        private static Embed GetGuildStatus(BotCore bot, ulong guildId)
+        private Embed GetGuildStatus(ulong guildId)
         {
-            if (bot.DiscordClient.Guilds.Any(g => g.Id == guildId))
+            if (DiscordClient.Guilds.Any(g => g.Id == guildId))
             {
-                var guild = bot.DiscordClient.Guilds.First(g => g.Id == guildId);
+                var guild = DiscordClient.Guilds.First(g => g.Id == guildId);
                 return new EmbedInstance()
                 {
                     Title = $"{guild.Name} Status",
@@ -168,7 +174,7 @@ namespace CrackersBot.Web.Services
                         new("Forum Channels", guild.ForumChannels.Count.ToString()),
                         new("Voice Channels", guild.VoiceChannels.Count.ToString())
                     ]
-                }.BuildDiscordEmbed(bot);
+                }.BuildDiscordEmbed();
             }
             else
             {
@@ -177,44 +183,44 @@ namespace CrackersBot.Web.Services
                     Title = "Guild Status",
                     Color = ACCENT_COLOR_ERROR,
                     Description = $"No guild foung with ID {guildId}"
-                }.BuildDiscordEmbed(bot);
+                }.BuildDiscordEmbed();
             }
         }
 
-        private static async Task ReloadGuildsAsync(BotCore bot)
+        private async Task ReloadGuildsAsync()
         {
-            await bot.SendMessageToTheCaptainAsync("SQUAK! Roger roger. Reloading configs...");
-            await bot.LoadGuildConfigsAsync();
-            await bot.SendMessageToTheCaptainAsync($"Guild configs have been reloaded. Listening for events/commands for {bot.Guilds.Count} guild{(bot.Guilds.Count == 1 ? String.Empty : "s")}.");
+            await SendMessageToTheCaptainAsync("SQUAK! Roger roger. Reloading configs...");
+            await LoadGuildConfigsAsync();
+            await SendMessageToTheCaptainAsync($"Guild configs have been reloaded. Listening for events/commands for {Guilds.Count} guild{(Guilds.Count == 1 ? String.Empty : "s")}.");
         }
 
-        private static async Task ReloadGuildConfigAsync(BotCore bot, string[] parameters)
+        private async Task ReloadGuildConfigAsync(string[] parameters)
         {
             if (parameters.Length > 0)
             {
                 if (UInt64.TryParse(parameters[0], out var guildId))
                 {
-                    await bot.SendMessageToTheCaptainAsync("Roger roger, attempting to reload guild...");
-                    await bot.LoadGuildConfigAsync(guildId);
+                    await SendMessageToTheCaptainAsync("Roger roger, attempting to reload guild...");
+                    await LoadGuildConfigAsync(guildId);
 
-                    if (bot.Guilds.TryGetValue(guildId, out var guild))
+                    if (Guilds.TryGetValue(guildId, out var guild))
                     {
-                        await bot.RegisterGuildCommandsAsync(guild);
-                        await bot.SendMessageToTheCaptainAsync("Guild reloaded");
+                        await RegisterGuildCommandsAsync(guild);
+                        await SendMessageToTheCaptainAsync("Guild reloaded");
                     }
                     else
                     {
-                        await bot.SendMessageToTheCaptainAsync("Doesn't look like there's a guild config with that guild ID");
+                        await SendMessageToTheCaptainAsync("Doesn't look like there's a guild config with that guild ID");
                     }
                 }
                 else
                 {
-                    await bot.SendMessageToTheCaptainAsync("That's not a valid guild ID");
+                    await SendMessageToTheCaptainAsync("That's not a valid guild ID");
                 }
             }
             else
             {
-                await bot.SendMessageToTheCaptainAsync("You have to specify a guild ID to reload, cap'n");
+                await SendMessageToTheCaptainAsync("You have to specify a guild ID to reload, cap'n");
             }
         }
     }

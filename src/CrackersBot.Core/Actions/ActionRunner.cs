@@ -19,7 +19,9 @@ namespace CrackersBot.Core.Actions
                 {
                     if (!instance.Enabled) return;
 
+                    var action = bot.GetRegisteredAction(instance.ActionId);
                     var processedParams = new Dictionary<string, string>();
+
                     foreach (var (paramName, paramValue) in instance.Parameters ?? [])
                     {
                         processedParams.Add(paramName, DefaultVariableProcessor.ProcessVariables(bot, paramValue, context));
@@ -27,14 +29,12 @@ namespace CrackersBot.Core.Actions
 
                     if (FilterHelpers.CheckFilters(bot, instance.Filters ?? [], instance.FilterMode, context))
                     {
-                        var action = bot.GetRegisteredAction(instance.ActionId);
-
-                        if (action.DoPreRunCheck(bot, processedParams))
+                        if (action.DoPreRunCheck(processedParams))
                         {
                             bot.Logger.LogDebug("Attempting to run action {instance.ActionId}", instance.ActionId);
 
                             var parsedParams = ParameterHelpers.GetParameterValues(action.ActionParameters, processedParams);
-                            await action.Run(bot, parsedParams, context);
+                            await action.Run(parsedParams, context);
                         }
                     }
                 }

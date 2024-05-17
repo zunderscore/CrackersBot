@@ -18,62 +18,54 @@ namespace CrackersBot.Core.Actions.Discord
         public string? Footer { get; set; }
         public List<EmbedField>? Fields { get; set; }
 
-        public Embed BuildDiscordEmbed(IBotCore bot, RunContext? context = null)
+        public Embed BuildDiscordEmbed()
         {
             var builder = new EmbedBuilder();
-            context ??= new();
 
-            var title = DefaultVariableProcessor.ProcessVariables(bot, Title, context);
-            if (!String.IsNullOrWhiteSpace(title))
+            if (!String.IsNullOrWhiteSpace(Title))
             {
-                builder = builder.WithTitle(title);
+                builder = builder.WithTitle(Title);
             }
 
-            var description = DefaultVariableProcessor.ProcessVariables(bot, Description, context);
-            if (!String.IsNullOrWhiteSpace(description))
+            if (!String.IsNullOrWhiteSpace(Description))
             {
-                builder = builder.WithDescription(description);
+                builder = builder.WithDescription(Description);
             }
 
-            var color = DefaultVariableProcessor.ProcessVariables(bot, Color, context);
-            if (!String.IsNullOrWhiteSpace(color))
+            if (!String.IsNullOrWhiteSpace(Color))
             {
-                if (HexColorRegex().IsMatch(color))
+                if (HexColorRegex().IsMatch(Color))
                 {
-                    var rawColor = $"0x{color[1..]}";
+                    var rawColor = $"0x{Color[1..]}";
                     builder = builder.WithColor(new Color(Convert.ToUInt32(rawColor, 16)));
                 }
                 else
                 {
-                    if (Enum.TryParse<Color>(color, out var discordColor))
+                    if (Enum.TryParse<Color>(Color, out var discordColor))
                     {
                         builder = builder.WithColor(discordColor);
                     }
                 }
             }
 
-            var url = DefaultVariableProcessor.ProcessVariables(bot, Url, context);
-            if (!String.IsNullOrWhiteSpace(url))
+            if (!String.IsNullOrWhiteSpace(Url))
             {
-                builder = builder.WithUrl(url);
+                builder = builder.WithUrl(Url);
             }
 
-            var imageUrl = DefaultVariableProcessor.ProcessVariables(bot, ImageUrl, context);
-            if (!String.IsNullOrWhiteSpace(imageUrl))
+            if (!String.IsNullOrWhiteSpace(ImageUrl))
             {
-                builder = builder.WithImageUrl(imageUrl);
+                builder = builder.WithImageUrl(ImageUrl);
             }
 
-            var thumbnailUrl = DefaultVariableProcessor.ProcessVariables(bot, ThumbnailUrl, context);
-            if (!String.IsNullOrWhiteSpace(thumbnailUrl))
+            if (!String.IsNullOrWhiteSpace(ThumbnailUrl))
             {
-                builder = builder.WithThumbnailUrl(thumbnailUrl);
+                builder = builder.WithThumbnailUrl(ThumbnailUrl);
             }
 
-            var footer = DefaultVariableProcessor.ProcessVariables(bot, Footer, context);
-            if (!String.IsNullOrWhiteSpace(footer))
+            if (!String.IsNullOrWhiteSpace(Footer))
             {
-                builder = builder.WithFooter(footer);
+                builder = builder.WithFooter(Footer);
             }
 
             if (Fields is not null)
@@ -81,23 +73,19 @@ namespace CrackersBot.Core.Actions.Discord
                 foreach (var field in Fields)
                 {
                     builder = builder.AddField(
-                        DefaultVariableProcessor.ProcessVariables(bot, field.Name, context),
-                        DefaultVariableProcessor.ProcessVariables(bot, field.Value, context),
+                        field.Name,
+                        field.Value,
                         field.IsInline
                     );
                 }
             }
 
-            var authorName = DefaultVariableProcessor.ProcessVariables(bot, AuthorName, context);
-            if (!String.IsNullOrWhiteSpace(authorName))
+            if (!String.IsNullOrWhiteSpace(AuthorName))
             {
-                var authorIconUrl = DefaultVariableProcessor.ProcessVariables(bot, AuthorIconUrl, context);
-                var authorUrl = DefaultVariableProcessor.ProcessVariables(bot, AuthorUrl, context);
-
                 builder.WithAuthor(
-                    authorName,
-                    String.IsNullOrEmpty(authorIconUrl) ? null : authorIconUrl,
-                    String.IsNullOrEmpty(authorUrl) ? null : authorUrl
+                    AuthorName,
+                    String.IsNullOrEmpty(AuthorIconUrl) ? null : AuthorIconUrl,
+                    String.IsNullOrEmpty(AuthorUrl) ? null : AuthorUrl
                 );
             }
 

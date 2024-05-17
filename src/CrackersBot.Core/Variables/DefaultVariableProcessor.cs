@@ -37,7 +37,7 @@ namespace CrackersBot.Core.Variables
 
                 if (bot.RegisteredVariables.TryGetValue(token, out IVariable? variable))
                 {
-                    value = value.Replace($"{{{{{token}}}}}", variable.GetValue(bot, context));
+                    value = value.Replace($"{{{{{token}}}}}", variable.GetValue(context));
                 }
             }
 

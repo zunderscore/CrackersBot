@@ -6,7 +6,7 @@ namespace CrackersBot.Core.Actions.Discord
     [ActionId(ACTION_ID)]
     [ActionName("Add User Discord Role")]
     [ActionDescription("Adds a role to a Discord user")]
-    public class AddUserRoleAction : ActionBase
+    public class AddUserRoleAction(IBotCore bot) : ActionBase(bot)
     {
         public const string ACTION_ID = "CrackersBot.Discord.AddUserRole";
 
@@ -16,7 +16,7 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.DISCORD_ROLE_ID, new UInt64ParameterType() },
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
+        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
         {
             try
             {
@@ -24,13 +24,13 @@ namespace CrackersBot.Core.Actions.Discord
                 var guildId = (ulong)parameters[CommonNames.DISCORD_GUILD_ID];
                 var roleId = (ulong)parameters[CommonNames.DISCORD_ROLE_ID];
 
-                bot.Logger.LogDebug("Attempting to add user {userId} to role {roleId} in guild {guildId}", userId, roleId, guildId);
+                Bot.Logger.LogDebug("Attempting to add user {userId} to role {roleId} in guild {guildId}", userId, roleId, guildId);
 
-                await bot.DiscordClient.GetGuild(guildId).GetUser(userId).AddRoleAsync(roleId);
+                await Bot.DiscordClient.GetGuild(guildId).GetUser(userId).AddRoleAsync(roleId);
             }
             catch (Exception ex)
             {
-                bot.Logger.LogError(
+                Bot.Logger.LogError(
                     ex,
                     "Error adding role {roleId} in guild {guildId} to user {userId}",
                     parameters[CommonNames.DISCORD_ROLE_ID],

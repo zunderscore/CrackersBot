@@ -5,7 +5,7 @@ namespace CrackersBot.Core.Filters.Discord
     [FilterId(FILTER_ID)]
     [FilterName("Discord User ID")]
     [FilterDescription("The ID of the Discord user")]
-    public class UserIdFilter : FilterBase
+    public class UserFilter : FilterBase
     {
         public const string FILTER_ID = "CrackersBot.Discord.User";
 

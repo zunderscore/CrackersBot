@@ -61,7 +61,7 @@ namespace CrackersBot.Core.Commands
 
             await command.FollowupAsync(
                 DefaultVariableProcessor.ProcessVariables(bot, Output.Text, context),
-                Output.GetParsedEmbeds(bot, context)?.ToArray(),
+                Output.GetParsedEmbeds()?.ToArray(),
                 ephemeral: Output.Ephemeral
             );
         }

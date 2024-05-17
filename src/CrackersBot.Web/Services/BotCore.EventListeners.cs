@@ -45,13 +45,13 @@ namespace CrackersBot.Web.Services
             {
                 foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                 {
-                    await RegisteredEventHandlers[eventId].Handle(this, instance, new RunContext());
+                    await RegisteredEventHandlers[eventId].Handle(instance, new RunContext());
                 }
             }
 
             try
             {
-                await SendMessageToTheCaptainAsync(AdminCommandHandler.GetStartupMessageEmbed(this));
+                await SendMessageToTheCaptainAsync(GetStartupMessageEmbed());
             }
             catch (Exception ex)
             {
@@ -127,7 +127,7 @@ namespace CrackersBot.Web.Services
 
                     foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                     {
-                        await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                        await RegisteredEventHandlers[eventId].Handle(instance, context);
                     }
 
                     if (startedStreaming)
@@ -140,13 +140,13 @@ namespace CrackersBot.Web.Services
                                 this,
                                 guild.GuildId,
                                 guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetUserStartedStreamingMessage(this, user)
+                                AuditHelpers.GetUserStartedStreamingMessage(user)
                             );
                         }
 
                         foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                         {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                            await RegisteredEventHandlers[eventId].Handle(instance, context);
                         }
                     }
 
@@ -160,14 +160,14 @@ namespace CrackersBot.Web.Services
                                 this,
                                 guild.GuildId,
                                 guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetUserStoppedStreamingMessage(this, user)
+                                AuditHelpers.GetUserStoppedStreamingMessage(user)
                             );
                         }
 
 
                         foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                         {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                            await RegisteredEventHandlers[eventId].Handle(instance, context);
                         }
                     }
                 }
@@ -196,7 +196,7 @@ namespace CrackersBot.Web.Services
                 {
                     foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                     {
-                        await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                        await RegisteredEventHandlers[eventId].Handle(instance, context);
                     }
                 }
             }
@@ -208,7 +208,7 @@ namespace CrackersBot.Web.Services
                 // Honey... There's a bear at the door.
                 if (message.Author.Id == ZUNDERSCORE_USER_ID)
                 {
-                    await AdminCommandHandler.HandleDMCommandAsync(this, message.Content ?? String.Empty);
+                    await HandleDMCommandAsync(message.Content ?? String.Empty);
                 }
                 else
                 {
@@ -242,13 +242,13 @@ namespace CrackersBot.Web.Services
                                     this,
                                     guild.GuildId,
                                     guild.AuditSettings.AuditChannelId,
-                                    AuditHelpers.GetMessageUpdatedMessage(this, message, oldMessage.Value.Content ?? String.Empty)
+                                    AuditHelpers.GetMessageUpdatedMessage(message, oldMessage.Value.Content ?? String.Empty)
                                 );
                             }
 
                             foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                             {
-                                await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                                await RegisteredEventHandlers[eventId].Handle(instance, context);
                             }
                         }
                     }
@@ -286,13 +286,13 @@ namespace CrackersBot.Web.Services
                                 this,
                                 guild.GuildId,
                                 guild.AuditSettings.AuditChannelId,
-                                AuditHelpers.GetMessageDeletedMessage(this, message.Value)
+                                AuditHelpers.GetMessageDeletedMessage(message.Value)
                             );
                         }
 
                         foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                         {
-                            await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                            await RegisteredEventHandlers[eventId].Handle(instance, context);
                         }
                     }
                 }
@@ -328,13 +328,13 @@ namespace CrackersBot.Web.Services
                         this,
                         guild.GuildId,
                         guild.AuditSettings.AuditChannelId,
-                        AuditHelpers.GetUserJoinedMessage(this, user)
+                        AuditHelpers.GetUserJoinedMessage(user)
                     );
                 }
 
                 foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                 {
-                    await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                    await RegisteredEventHandlers[eventId].Handle(instance, context);
                 }
             }
         }
@@ -358,13 +358,13 @@ namespace CrackersBot.Web.Services
                         this,
                         guild.GuildId,
                         guild.AuditSettings.AuditChannelId,
-                        AuditHelpers.GetUserLeftMessage(this, user)
+                        AuditHelpers.GetUserLeftMessage(user)
                     );
                 }
 
                 foreach (var instance in guild.EventHandlers.Where(e => e.EventId == eventId && e.Enabled))
                 {
-                    await RegisteredEventHandlers[eventId].Handle(this, instance, context);
+                    await RegisteredEventHandlers[eventId].Handle(instance, context);
                 }
             }
         }

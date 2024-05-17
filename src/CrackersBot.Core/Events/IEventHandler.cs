@@ -3,20 +3,14 @@ using CrackersBot.Core.Filters;
 
 namespace CrackersBot.Core.Events
 {
-    public interface IEventHandler
+    public interface IEventHandler : IBotConsumer, IRegisteredItem
     {
-        string GetEventId();
-        string GetEventName();
-        string GetEventDescription();
-
         public virtual Task Handle(
-            IBotCore bot,
             EventHandlerInstance instance,
             RunContext context
-        ) => Handle(bot, instance.Actions, context, instance.Filters, instance.FilterMode);
+        ) => Handle(instance.Actions, context, instance.Filters, instance.FilterMode);
 
         Task Handle(
-            IBotCore bot,
             IEnumerable<ActionInstance> actions,
             RunContext context,
             IEnumerable<FilterInstance>? filters = null,
@@ -24,7 +18,6 @@ namespace CrackersBot.Core.Events
         );
 
         Task RunActions(
-            IBotCore bot,
             IEnumerable<ActionInstance> actions,
             RunContext context
         );

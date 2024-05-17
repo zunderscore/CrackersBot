@@ -6,7 +6,7 @@ namespace CrackersBot.Core.Actions.Discord
     [ActionId(ACTION_ID)]
     [ActionName("Send Discord Direct Message")]
     [ActionDescription("Sends a direct message to the specified Discord user")]
-    public class SendDirectMessageAction : ActionBase
+    public class SendDirectMessageAction(IBotCore bot) : ActionBase(bot)
     {
         public const string ACTION_ID = "CrackersBot.Discord.SendDirectMessage";
 
@@ -15,10 +15,10 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.MESSAGE_TEXT, new StringParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
+        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
         {
             var userId = (ulong)parameters[CommonNames.DISCORD_USER_ID];
-            var user = await bot.DiscordClient.GetUserAsync(userId);
+            var user = await Bot.DiscordClient.GetUserAsync(userId);
 
             await user.CreateDMChannelAsync();
             await user.SendMessageAsync((string)parameters[CommonNames.MESSAGE_TEXT]);

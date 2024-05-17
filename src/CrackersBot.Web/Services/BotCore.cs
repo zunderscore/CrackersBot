@@ -169,7 +169,7 @@ namespace CrackersBot.Web.Services
 
         public void RegisterAction(IAction action)
         {
-            var id = action.GetActionId();
+            var id = action.GetId();
 
             if (IsActionRegistered(id))
             {
@@ -275,7 +275,7 @@ namespace CrackersBot.Web.Services
 
         public void RegisterEventHandler(IEventHandler handler)
         {
-            var id = handler.GetEventId();
+            var id = handler.GetId();
 
             if (IsEventHandlerRegistered(id))
             {
@@ -324,7 +324,7 @@ namespace CrackersBot.Web.Services
 
         public void RegisterFilter(IFilter filter)
         {
-            var id = filter.GetFilterId();
+            var id = filter.GetId();
 
             if (IsFilterRegistered(id))
             {
@@ -366,7 +366,7 @@ namespace CrackersBot.Web.Services
 
         private void RegisterCoreActions()
         {
-            foreach (var action in CoreHelpers.GetAllCoreActions())
+            foreach (var action in CoreHelpers.GetAllCoreActions(this))
             {
                 RegisterAction(action);
             }
@@ -374,7 +374,7 @@ namespace CrackersBot.Web.Services
 
         private void RegisterCoreVariables()
         {
-            foreach (var variable in CoreHelpers.GetAllCoreVariables())
+            foreach (var variable in CoreHelpers.GetAllCoreVariables(this))
             {
                 RegisterVariable(variable);
             }
@@ -382,7 +382,7 @@ namespace CrackersBot.Web.Services
 
         private void RegisterCoreEventHandlers()
         {
-            foreach (var handler in CoreHelpers.GetAllCoreEventHandlers())
+            foreach (var handler in CoreHelpers.GetAllCoreEventHandlers(this))
             {
                 RegisterEventHandler(handler);
             }
@@ -390,7 +390,7 @@ namespace CrackersBot.Web.Services
 
         private void RegisterCoreFilters()
         {
-            foreach (var filter in CoreHelpers.GetAllCoreFilters())
+            foreach (var filter in CoreHelpers.GetAllCoreFilters(this))
             {
                 RegisterFilter(filter);
             }

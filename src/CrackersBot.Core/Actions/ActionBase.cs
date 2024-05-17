@@ -3,20 +3,20 @@ using CrackersBot.Core.Parameters;
 
 namespace CrackersBot.Core.Actions
 {
-    public abstract class ActionBase : IAction
+    public abstract class ActionBase(IBotCore bot) : IAction
     {
-        public string GetActionId() => GetType().GetCustomAttribute<ActionIdAttribute>()?.Id ?? String.Empty;
-        public string GetActionName() => GetType().GetCustomAttribute<ActionNameAttribute>()?.Name ?? String.Empty;
-        public string GetActionDescription() => GetType().GetCustomAttribute<ActionDescriptionAttribute>()?.Description ?? String.Empty;
+        public IBotCore Bot { get; } = bot;
 
         public abstract Dictionary<string, IParameterType> ActionParameters { get; }
 
-        public bool DoPreRunCheck(IBotCore bot, Dictionary<string, string> rawParams)
-        {
-            return bot?.DiscordClient is not null && ValidateParameters(rawParams);
-        }
+        public string GetId() => GetType().GetCustomAttribute<ActionIdAttribute>()?.Id ?? String.Empty;
+        public string GetName() => GetType().GetCustomAttribute<ActionNameAttribute>()?.Name ?? String.Empty;
+        public string GetDescription() => GetType().GetCustomAttribute<ActionDescriptionAttribute>()?.Description ?? String.Empty;
 
-        public abstract Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context);
+        public bool DoPreRunCheck(Dictionary<string, string> rawParams)
+            => Bot?.DiscordClient is not null && ValidateParameters(rawParams);
+
+        public abstract Task Run(Dictionary<string, object> parameters, RunContext context);
 
         public virtual bool ValidateParameters(Dictionary<string, string> rawParams)
             => ParameterHelpers.ValidateParameters(ActionParameters, rawParams);

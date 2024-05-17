@@ -6,7 +6,7 @@ namespace CrackersBot.Core.Actions.Discord
     [ActionId(ACTION_ID)]
     [ActionName("React to Discord Message")]
     [ActionDescription("Adds a reaction to the specified Discord message")]
-    public class ReactToMessageAction : ActionBase
+    public class ReactToMessageAction(IBotCore bot) : ActionBase(bot)
     {
         public const string ACTION_ID = "CrackersBot.Discord.ReactToMessage";
 
@@ -17,11 +17,11 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.DISCORD_EMOTE_NAME, new StringParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
+        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
         {
             if (!parameters.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out object? channelId) || !parameters.TryGetValue(CommonNames.DISCORD_MESSAGE_ID, out object? messageId)) return;
 
-            var guild = await bot.DiscordClient.Rest.GetGuildAsync((ulong)parameters[CommonNames.DISCORD_GUILD_ID]);
+            var guild = await Bot.DiscordClient.Rest.GetGuildAsync((ulong)parameters[CommonNames.DISCORD_GUILD_ID]);
             var emote = (await guild.GetEmotesAsync())
                 .FirstOrDefault(e => e.Name.Equals((string)parameters[CommonNames.DISCORD_EMOTE_NAME], StringComparison.CurrentCultureIgnoreCase));
 

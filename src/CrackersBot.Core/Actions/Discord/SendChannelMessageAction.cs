@@ -6,7 +6,7 @@ namespace CrackersBot.Core.Actions.Discord
     [ActionId(ACTION_ID)]
     [ActionName("Send Discord Channel Message")]
     [ActionDescription("Sends a message to the specified Discord channel")]
-    public class SendChannelMessageAction : ActionBase
+    public class SendChannelMessageAction(IBotCore bot) : ActionBase(bot)
     {
         public const string ACTION_ID = "CrackersBot.Discord.SendChannelMessage";
 
@@ -28,9 +28,9 @@ namespace CrackersBot.Core.Actions.Discord
                 && (hasMessage || hasEmbed);
         }
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
+        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
         {
-            var channel = await bot.DiscordClient.GetChannelAsync((ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]);
+            var channel = await Bot.DiscordClient.GetChannelAsync((ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]);
 
             if (channel is ITextChannel textChannel)
             {
@@ -41,7 +41,7 @@ namespace CrackersBot.Core.Actions.Discord
                 parameters.TryGetValue(CommonNames.DISCORD_EMBED, out object? embed);
 
                 await textChannel.SendMessageAsync(message,
-                    embed: (embed as EmbedInstance)?.BuildDiscordEmbed(bot, context));
+                    embed: (embed as EmbedInstance)?.BuildDiscordEmbed());
             }
         }
     }

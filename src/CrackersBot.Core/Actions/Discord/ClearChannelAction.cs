@@ -6,7 +6,7 @@ namespace CrackersBot.Core.Actions.Discord
     [ActionId(ACTION_ID)]
     [ActionName("Clear Discord Channel")]
     [ActionDescription("Clears messages from a Discord channel")]
-    public class ClearChannelAction : ActionBase
+    public class ClearChannelAction(IBotCore bot) : ActionBase(bot)
     {
         public const string ACTION_ID = "CrackersBot.Discord.ClearChannel";
 
@@ -15,7 +15,7 @@ namespace CrackersBot.Core.Actions.Discord
             { CommonNames.LIMIT, new UInt16ParameterType() }
         };
 
-        public override async Task Run(IBotCore bot, Dictionary<string, object> parameters, RunContext context)
+        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
         {
             ushort limit = 100;
             if (parameters.TryGetValue(CommonNames.LIMIT, out object? value) && value is ushort)
@@ -23,7 +23,7 @@ namespace CrackersBot.Core.Actions.Discord
                 limit = (ushort)value;
             }
 
-            var channel = await bot.DiscordClient.GetChannelAsync(
+            var channel = await Bot.DiscordClient.GetChannelAsync(
                 (ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]
             );
 

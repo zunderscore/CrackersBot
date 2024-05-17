@@ -26,7 +26,7 @@ namespace CrackersBot.Core.Auditing
             }
         }
 
-        public static Embed GetUserJoinedMessage(IBotCore bot, IGuildUser user)
+        public static Embed GetUserJoinedMessage(IGuildUser user)
         {
             var timeSinceAccountCreated = DateTimeOffset.UtcNow - user.CreatedAt.UtcDateTime;
             var embed = new EmbedInstance()
@@ -39,10 +39,10 @@ namespace CrackersBot.Core.Auditing
                     : $"<@{user.Id}> joined the server. Account was created {timeSinceAccountCreated.ToHumanReadableString()} ago."
             };
 
-            return embed.BuildDiscordEmbed(bot, new());
+            return embed.BuildDiscordEmbed();
         }
 
-        public static Embed GetUserLeftMessage(IBotCore bot, IUser user)
+        public static Embed GetUserLeftMessage(IUser user)
         {
             var embed = new EmbedInstance()
             {
@@ -54,10 +54,10 @@ namespace CrackersBot.Core.Auditing
                     : $"<@{user.Id}> left the server."
             };
 
-            return embed.BuildDiscordEmbed(bot, new());
+            return embed.BuildDiscordEmbed();
         }
 
-        public static Embed? GetUserStartedStreamingMessage(IBotCore bot, IUser user)
+        public static Embed? GetUserStartedStreamingMessage(IUser user)
         {
             if (user is IGuildUser guildUser)
             {
@@ -73,13 +73,13 @@ namespace CrackersBot.Core.Auditing
                     ]
                 };
 
-                return embed.BuildDiscordEmbed(bot, new());
+                return embed.BuildDiscordEmbed();
             }
 
             return null;
         }
 
-        public static Embed? GetUserStoppedStreamingMessage(IBotCore bot, IUser user)
+        public static Embed? GetUserStoppedStreamingMessage(IUser user)
         {
             var embed = new EmbedInstance()
             {
@@ -88,10 +88,10 @@ namespace CrackersBot.Core.Auditing
                 AuthorIconUrl = user.GetDisplayAvatarUrl()
             };
 
-            return embed.BuildDiscordEmbed(bot, new());
+            return embed.BuildDiscordEmbed();
         }
 
-        public static Embed? GetMessageUpdatedMessage(IBotCore bot, IMessage message, string originalMessage)
+        public static Embed? GetMessageUpdatedMessage(IMessage message, string originalMessage)
         {
             var updatedMessage = message.Content;
             var embed = new EmbedInstance()
@@ -106,10 +106,10 @@ namespace CrackersBot.Core.Auditing
                 ]
             };
 
-            return embed.BuildDiscordEmbed(bot, new());
+            return embed.BuildDiscordEmbed();
         }
 
-        public static Embed? GetMessageDeletedMessage(IBotCore bot, IMessage message)
+        public static Embed? GetMessageDeletedMessage(IMessage message)
         {
             var originalMessage = message.Content;
             var embed = new EmbedInstance()
@@ -123,7 +123,7 @@ namespace CrackersBot.Core.Auditing
                 ]
             };
 
-            return embed.BuildDiscordEmbed(bot, new());
+            return embed.BuildDiscordEmbed();
         }
     }
 }

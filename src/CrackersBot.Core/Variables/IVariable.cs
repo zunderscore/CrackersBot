@@ -1,9 +1,9 @@
 namespace CrackersBot.Core.Variables
 {
-    public interface IVariable
+    public interface IVariable : IBotConsumer
     {
         string Token { get; }
 
-        string GetValue(IBotCore bot, RunContext context);
+        string GetValue(RunContext context);
     }
 }
