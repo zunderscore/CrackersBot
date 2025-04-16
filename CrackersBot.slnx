@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CrackersBot.Core/CrackersBot.Core.csproj" />
+    <Project Path="src/CrackersBot.Web/CrackersBot.Web.csproj" />
+  </Folder>
+</Solution>

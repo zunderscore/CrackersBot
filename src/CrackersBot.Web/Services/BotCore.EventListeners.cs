@@ -9,6 +9,8 @@ namespace CrackersBot.Web.Services
 {
     public partial class BotCore
     {
+        private bool _hasConnected = false;
+
         private void SetupEventListeners()
         {
             _discordSocketClient.Ready += OnClientReady;
@@ -51,7 +53,15 @@ namespace CrackersBot.Web.Services
 
             try
             {
-                await SendMessageToTheCaptainAsync(GetStartupMessageEmbed());
+                if (!_hasConnected)
+                {
+                    _hasConnected = true;
+                    await SendMessageToTheCaptainAsync(GetStartupMessageEmbed());
+                }
+                else
+                {
+                    await SendMessageToTheCaptainAsync(GetReconnectEmbed());
+                }
             }
             catch (Exception ex)
             {

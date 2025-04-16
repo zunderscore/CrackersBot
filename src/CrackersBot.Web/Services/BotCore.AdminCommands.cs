@@ -24,6 +24,15 @@ namespace CrackersBot.Web.Services
             }.BuildDiscordEmbed();
         }
 
+        public Embed GetReconnectEmbed()
+        {
+            return new EmbedInstance()
+            {
+                Title = "CrackersBot has reconnected",
+                Color = ACCENT_COLOR
+            }.BuildDiscordEmbed();
+        }
+
         public async Task HandleDMCommandAsync(string message)
         {
             var messageParts = message.Split(' ');
