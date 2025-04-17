@@ -13,7 +13,6 @@ else
 
 if (!builder.Environment.IsDevelopment())
 {
-    builder.Configuration.AddEnvironmentVariables();
     builder.Configuration.AddAzureKeyVault(
         new Uri($"https://{builder.Configuration["KeyVaultName"]}.vault.azure.net/"),
         new Azure.Identity.DefaultAzureCredential()
