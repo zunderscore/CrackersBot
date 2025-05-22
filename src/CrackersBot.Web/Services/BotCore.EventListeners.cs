@@ -25,8 +25,11 @@ namespace CrackersBot.Web.Services
             _discordSocketClient.UserLeft += OnUserLeft;
         }
 
+        [LoggerMessage(Level = LogLevel.Debug, Message = "{message}")]
+        partial void LogDebugMessage(string message);
+
         [LoggerMessage(Level = LogLevel.Debug, Message = "{eventName} triggered")]
-        public partial void LogEventTriggered(string eventName);
+        partial void LogEventTriggered(string eventName);
 
         private async Task OnClientReady()
         {
