@@ -1,5 +1,6 @@
 using CrackersBot.Core.Actions.Discord;
 using Discord;
+using Humanizer;
 
 namespace CrackersBot.Web.Services
 {
@@ -26,10 +27,21 @@ namespace CrackersBot.Web.Services
 
         public Embed GetReconnectEmbed()
         {
+            List<Core.Actions.Discord.EmbedField> fields = [
+                new("Disconnected Time", (DateTimeOffset.Now - _lastDisconnectTime).Humanize()),
+                new("Reason", _lastDisconnectException?.Message ?? "Unknown")
+            ];
+
+            if (_lastDisconnectException?.InnerException is not null)
+            {
+                fields.Add(new("Additional Info", _lastDisconnectException.InnerException.Message));
+            }
+
             return new EmbedInstance()
             {
                 Title = "CrackersBot has reconnected",
-                Color = ACCENT_COLOR
+                Color = ACCENT_COLOR,
+                Fields = fields
             }.BuildDiscordEmbed();
         }
 

@@ -10,10 +10,13 @@ namespace CrackersBot.Web.Services
     public partial class BotCore
     {
         private bool _hasConnected = false;
+        private DateTimeOffset _lastDisconnectTime = DateTimeOffset.MinValue;
+        private Exception _lastDisconnectException;
 
         private void SetupEventListeners()
         {
             _discordSocketClient.Ready += OnClientReady;
+            _discordSocketClient.Disconnected += OnBotDisconnected;
             _discordSocketClient.SlashCommandExecuted += OnSlashCommandExecuted;
             _discordSocketClient.UserCommandExecuted += OnUserCommandExecuted;
             _discordSocketClient.MessageCommandExecuted += OnMessageCommandExecuted;
@@ -69,6 +72,20 @@ namespace CrackersBot.Web.Services
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Unable to send OnBotStarted message");
+            }
+        }
+
+        private async Task OnBotDisconnected(Exception disconnectEx)
+        {
+            try
+            {
+                Logger.LogWarning(disconnectEx, "Bot disconnected");
+                _lastDisconnectTime = DateTimeOffset.Now;
+                _lastDisconnectException = disconnectEx;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error during OnBotDisconnected");
             }
         }
 
