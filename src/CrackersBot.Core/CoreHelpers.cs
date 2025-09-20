@@ -1,119 +1,149 @@
 using CrackersBot.Core.Actions;
+using CrackersBot.Core.Actions.Common;
 using CrackersBot.Core.Actions.Discord;
 using CrackersBot.Core.Events;
+using CrackersBot.Core.Events.Common;
 using CrackersBot.Core.Events.Discord;
 using CrackersBot.Core.Filters;
+using CrackersBot.Core.Filters.Common;
 using CrackersBot.Core.Filters.Discord;
 using CrackersBot.Core.Variables;
 using CrackersBot.Core.Variables.Bot;
+using CrackersBot.Core.Variables.Common;
 using CrackersBot.Core.Variables.Discord;
-using CrackersBot.Core.Variables.Shared;
 
-namespace CrackersBot.Core
+namespace CrackersBot.Core;
+
+public static class CoreHelpers
 {
-    public static class CoreHelpers
+    private static object? CreateInstanceWithBotServices(this Type type, BotServiceProvider botServices)
     {
-        public static IEnumerable<IAction> GetAllCoreActions(IBotCore bot)
+        return Activator.CreateInstance(type, botServices);
+    }
+
+    public static void RegisterCoreActions(BotServiceProvider botServices)
+    {
+        List<Type> coreActions =
+        [
+            // Base actions
+            typeof(DelayAction),
+
+            // Discord actions
+            typeof(AddUserRoleAction),
+            typeof(ClearChannelAction),
+            typeof(ReactToMessageAction),
+            typeof(RemoveUserRoleAction),
+            typeof(SendChannelMessageAction),
+            typeof(SendDirectMessageAction)
+        ];
+
+        var actionManager = botServices.GetBotService<IActionManager>();
+
+        foreach (var actionType in coreActions)
         {
-            var actions = new List<IAction>(){
-                // Basic actions
-                new DelayAction(bot),
-
-                // Discord actions
-                new AddUserRoleAction(bot),
-                new ClearChannelAction(bot),
-                new ReactToMessageAction(bot),
-                new RemoveUserRoleAction(bot),
-                new SendChannelMessageAction(bot),
-                new SendDirectMessageAction(bot),
-            };
-
-            return actions;
+            actionManager.RegisterAction((IAction)actionType.CreateInstanceWithBotServices(botServices)!);
         }
+    }
 
-        public static IEnumerable<IEventHandler> GetAllCoreEventHandlers(IBotCore bot)
+    public static void RegisterCoreEvents(BotServiceProvider botServices)
+    {
+        List<EventDefinition> coreEvents = [
+            // Base events
+            new BotStartedEvent(),
+
+            // Discord events
+            new MessageDeletedEvent(),
+            new MessageDeletedEvent(),
+            new MessageReceivedEvent(),
+            new MessageUpdatedEvent(),
+            new UserJoinedEvent(),
+            new UserLeftEvent(),
+            new UserPresenceUpdatedEvent(),
+            new UserStartedStreamingEvent(),
+            new UserStoppedStreamingEvent(),
+        ];
+
+
+        var eventManager = botServices.GetBotService<IEventManager>();
+
+        foreach (var eventDef in coreEvents)
         {
-            var eventHandlers = new List<IEventHandler>() {
-                // Base events
-                new BotStartedEventHandler(bot),
-
-                // Discord events
-                new MessageDeletedEventHandler(bot),
-                new MessageReceivedEventHandler(bot),
-                new MessageUpdatedEventHandler(bot),
-                new UserJoinedEventHandler(bot),
-                new UserLeftEventHandler(bot),
-                new UserPresenceUpdatedEventHandler(bot),
-                new UserStartedStreamingEventHandler(bot),
-                new UserStoppedStreamingEventHandler(bot),
-            };
-
-            return eventHandlers;
+            eventManager.RegisterEvent(eventDef);
         }
+    }
 
-        public static IEnumerable<IFilter> GetAllCoreFilters(IBotCore bot)
+    public static void RegisterCoreFilters(BotServiceProvider botServices)
+    {
+        List<Type> coreFilters =
+        [
+            // Base filters
+            typeof(BotFilter),
+            typeof(MessageTextFilter),
+
+            // Discord filters
+            typeof(ChannelFilter),
+            typeof(UserFilter),
+        ];
+
+        var filterManager = botServices.GetBotService<IFilterManager>();
+
+        foreach (var filterType in coreFilters)
         {
-            var filters = new List<IFilter>()
-            {
-                // Base filters
-                new BotFilter(),
-                new MessageTextFilter(),
-
-                // Discord filters
-                new ChannelFilter(),
-                new UserFilter(),
-            };
-
-            return filters;
+            filterManager.RegisterFilter((IFilter)filterType.CreateInstanceWithBotServices(botServices)!);
         }
+    }
 
-        public static IEnumerable<IVariable> GetAllCoreVariables(IBotCore bot)
+    public static void RegisterCoreVariables(BotServiceProvider botServices)
+    {
+        List<Type> coreVariables =
+        [
+            // Bot variables
+            typeof(RegisteredActionCountVariable),
+            typeof(RegisteredEventCountVariable),
+            typeof(RegisteredFilterCountVariable),
+            typeof(RegisteredVariableCountVariable),
+
+            // Discord variables
+            typeof(ChannelIdVariable),
+            typeof(ChannelNameVariable),
+            typeof(ChannelTopicVariable),
+            typeof(GuildIdVariable),
+            typeof(GuildNameVariable),
+            typeof(IsNsfwVariable),
+            typeof(IsWebhookVariable),
+            typeof(MessageIdVariable),
+            typeof(TargetMessageIdVariable),
+            typeof(TargetUserDisplayNameVariable),
+            typeof(TargetUserGlobalDisplayNameVariable),
+            typeof(TargetUserIdVariable),
+            typeof(TargetUserNameVariable),
+            typeof(UserAvatarUrlVariable),
+            typeof(UserCustomStatusEmoteNameVariable),
+            typeof(UserCustomStatusVariable),
+            typeof(UserDisplayNameVariable),
+            typeof(UserGlobalDisplayNameVariable),
+            typeof(UserHasCustomStatusVariable),
+            typeof(UserIdVariable),
+            typeof(UserNameVariable),
+            typeof(UserStatusVariable),
+            typeof(VoiceChannelUserLimitVariable),
+
+            // Shared variables
+            typeof(GameNameVariable),
+            typeof(IsBotVariable),
+            typeof(IsStreamingVariable),
+            typeof(MessageTextVariable),
+            typeof(PreviousMessageTextVariable),
+            typeof(StreamTitleVariable),
+            typeof(StreamUrlVariable),
+            typeof(TimeInMillisecondsVariable),
+        ];
+
+        var variableManager = botServices.GetBotService<IVariableManager>();
+
+        foreach (var variableType in coreVariables)
         {
-            var variables = new List<IVariable>()
-            {
-                // Bot variables
-                new RegisteredActionCountVariable(bot),
-                new RegisteredEventHandlerCountVariable(bot),
-                new RegisteredFilterCountVariable(bot),
-                new RegisteredVariableCountVariable(bot),
-
-                // Discord variables
-                new ChannelIdVariable(bot),
-                new ChannelNameVariable(bot),
-                new ChannelTopicVariable(bot),
-                new GuildIdVariable(bot),
-                new GuildNameVariable(bot),
-                new IsNsfwVariable(bot),
-                new IsWebhookVariable(bot),
-                new MessageIdVariable(bot),
-                new TargetMessageIdVariable(bot),
-                new TargetUserDisplayNameVariable(bot),
-                new TargetUserGlobalDisplayNameVariable(bot),
-                new TargetUserIdVariable(bot),
-                new TargetUserNameVariable(bot),
-                new UserAvatarUrlVariable(bot),
-                new UserCustomStatusEmoteNameVariable(bot),
-                new UserCustomStatusVariable(bot),
-                new UserDisplayNameVariable(bot),
-                new UserGlobalDisplayNameVariable(bot),
-                new UserHasCustomStatusVariable(bot),
-                new UserIdVariable(bot),
-                new UserNameVariable(bot),
-                new UserStatusVariable(bot),
-                new VoiceChannelUserLimitVariable(bot),
-
-                // Shared variables
-                new GameNameVariable(bot),
-                new IsBotVariable(bot),
-                new IsStreamingVariable(bot),
-                new MessageTextVariable(bot),
-                new PreviousMessageTextVariable(bot),
-                new StreamTitleVariable(bot),
-                new StreamUrlVariable(bot),
-                new TimeInMillisecondsVariable(bot),
-            };
-
-            return variables;
+            variableManager.RegisterVariable((IVariable)variableType.CreateInstanceWithBotServices(botServices)!);
         }
     }
 }

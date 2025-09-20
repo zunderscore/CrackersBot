@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.DISCORD_USER_STATUS)]
-    [VariableDescription("The Discord user's status")]
-    public class UserStatusVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class UserStatusVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.DISCORD_USER_STATUS,
+        "Discord User Status",
+        "The Discord user's status",
+        botServices
+    );

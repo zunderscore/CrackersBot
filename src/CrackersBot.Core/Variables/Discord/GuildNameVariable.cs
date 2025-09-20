@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.DISCORD_GUILD_NAME)]
-    [VariableDescription("The Discord guild name")]
-    public class GuildNameVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class GuildNameVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.DISCORD_GUILD_NAME,
+        "Discord Guild Name",
+        "The Discord guild name",
+        botServices
+    );

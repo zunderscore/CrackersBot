@@ -1,48 +1,52 @@
 using CrackersBot.Core.Parameters;
 using Discord;
+using Discord.WebSocket;
 
-namespace CrackersBot.Core.Actions.Discord
+namespace CrackersBot.Core.Actions.Discord;
+
+public class SendChannelMessageAction(BotServiceProvider botServices)
+    : ActionBase(
+        ACTION_ID,
+        "Send Discord Channel Message",
+        "Sends a message to the specified Discord channel",
+        botServices
+    )
 {
-    [ActionId(ACTION_ID)]
-    [ActionName("Send Discord Channel Message")]
-    [ActionDescription("Sends a message to the specified Discord channel")]
-    public class SendChannelMessageAction(IBotCore bot) : ActionBase(bot)
+    public const string ACTION_ID = "CrackersBot.Discord.SendChannelMessage";
+
+    public override Dictionary<string, IParameterType> ActionParameters => new() {
+        { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() },
+        { CommonNames.MESSAGE_TEXT, new StringParameterType(true) },
+        { CommonNames.DISCORD_EMBED, new ObjectParameterType(typeof(EmbedInstance), true) }
+    };
+
+    public override bool ValidateParameters(Dictionary<string, string> parameters)
     {
-        public const string ACTION_ID = "CrackersBot.Discord.SendChannelMessage";
+        var hasMessage = parameters.ContainsKey(CommonNames.MESSAGE_TEXT)
+            && ActionParameters[CommonNames.MESSAGE_TEXT].Validate(parameters[CommonNames.MESSAGE_TEXT], true);
 
-        public override Dictionary<string, IParameterType> ActionParameters => new() {
-            { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() },
-            { CommonNames.MESSAGE_TEXT, new StringParameterType(true) },
-            { CommonNames.DISCORD_EMBED, new ObjectParameterType(typeof(EmbedInstance), true) }
-        };
+        var hasEmbed = parameters.ContainsKey(CommonNames.DISCORD_EMBED)
+            && ActionParameters[CommonNames.DISCORD_EMBED].Validate(parameters[CommonNames.DISCORD_EMBED], true);
 
-        public override bool ValidateParameters(Dictionary<string, string> parameters)
+        return base.ValidateParameters(parameters)
+            && (hasMessage || hasEmbed);
+    }
+
+    public override async Task Run(Dictionary<string, object> parameters, RunContext context)
+    {
+        var discordClient = BotServices.GetBotService<DiscordSocketClient>();
+        var channel = await discordClient.GetChannelAsync((ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]);
+
+        if (channel is ITextChannel textChannel)
         {
-            var hasMessage = parameters.ContainsKey(CommonNames.MESSAGE_TEXT)
-                && ActionParameters[CommonNames.MESSAGE_TEXT].Validate(parameters[CommonNames.MESSAGE_TEXT], true);
+            var message = !parameters.TryGetValue(CommonNames.MESSAGE_TEXT, out object? value) || value is null
+                ? String.Empty
+                : value.ToString() ?? String.Empty;
 
-            var hasEmbed = parameters.ContainsKey(CommonNames.DISCORD_EMBED)
-                && ActionParameters[CommonNames.DISCORD_EMBED].Validate(parameters[CommonNames.DISCORD_EMBED], true);
+            parameters.TryGetValue(CommonNames.DISCORD_EMBED, out object? embed);
 
-            return base.ValidateParameters(parameters)
-                && (hasMessage || hasEmbed);
-        }
-
-        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
-        {
-            var channel = await Bot.DiscordClient.GetChannelAsync((ulong)parameters[CommonNames.DISCORD_CHANNEL_ID]);
-
-            if (channel is ITextChannel textChannel)
-            {
-                var message = !parameters.TryGetValue(CommonNames.MESSAGE_TEXT, out object? value) || value is null
-                    ? String.Empty
-                    : value.ToString() ?? String.Empty;
-
-                parameters.TryGetValue(CommonNames.DISCORD_EMBED, out object? embed);
-
-                await textChannel.SendMessageAsync(message,
-                    embed: (embed as EmbedInstance)?.BuildDiscordEmbed());
-            }
+            await textChannel.SendMessageAsync(message,
+                embed: (embed as EmbedInstance)?.BuildDiscordEmbed());
         }
     }
 }

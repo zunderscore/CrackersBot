@@ -1,401 +1,173 @@
+using System.Collections.Concurrent;
 using CrackersBot.Core;
 using CrackersBot.Core.Actions;
+using CrackersBot.Core.Commands;
 using CrackersBot.Core.Events;
 using CrackersBot.Core.Filters;
 using CrackersBot.Core.Variables;
 using Discord;
 using Discord.WebSocket;
 using Microsoft.Azure.Cosmos;
-using System.Collections.Concurrent;
 
-namespace CrackersBot.Web.Services
+namespace CrackersBot.Web.Services;
+
+public partial class BotCore(
+    IConfiguration config,
+    BotServiceProvider botServices
+) : IBotCore
 {
-    public partial class BotCore : IBotCore
+    private const ulong ZUNDERSCORE_USER_ID = 209052262671187968;
+
+    private readonly IConfiguration _config = config;
+    private readonly BotServiceProvider _botServices = botServices;
+    private readonly DiscordSocketClient _discordSocketClient = botServices.GetBotService<DiscordSocketClient>();
+    private readonly ILogger _logger = botServices.GetLogger<BotCore>();
+    private readonly IActionManager _actionManager = botServices.GetBotService<IActionManager>();
+    private readonly IEventManager _eventManager = botServices.GetBotService<IEventManager>();
+    private readonly IFilterManager _filterManager = botServices.GetBotService<IFilterManager>();
+    private readonly IVariableManager _variableManager = botServices.GetBotService<IVariableManager>();
+    private readonly ICommandManager _commandManager = botServices.GetBotService<ICommandManager>();
+
+    public ILogger Logger => _logger;
+
+    public DiscordSocketClient DiscordClient => _discordSocketClient;
+
+    internal DateTime StartupTime { get; } = DateTime.UtcNow;
+
+    public ConcurrentDictionary<ulong, GuildConfig> Guilds { get; } = new();
+
+    #region Core Functions
+
+    internal async Task StartBotCoreAsync()
     {
-        private const ulong ZUNDERSCORE_USER_ID = 209052262671187968;
+        CoreHelpers.RegisterCoreActions(_botServices);
+        CoreHelpers.RegisterCoreVariables(_botServices);
+        CoreHelpers.RegisterCoreEvents(_botServices);
+        CoreHelpers.RegisterCoreFilters(_botServices);
 
-        private readonly IConfiguration _config;
-        private readonly DiscordSocketClient _discordSocketClient;
-        private readonly ILogger _logger;
+        SetupEventListeners();
 
-        public BotCore(IConfiguration config, ILogger<BotCore> logger)
-        {
-            _config = config;
-            _logger = logger;
-            _discordSocketClient = new DiscordSocketClient(new DiscordSocketConfig()
-            {
-                MessageCacheSize = 50,
-                GatewayIntents = GatewayIntents.All,
-                AlwaysDownloadUsers = true
-            });
-        }
+        await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
+        await _discordSocketClient.StartAsync();
 
-        public ILogger Logger => _logger;
+        await _discordSocketClient.SetActivityAsync(new Game("with Loaf", ActivityType.Playing));
+    }
 
-        public DiscordSocketClient DiscordClient => _discordSocketClient;
+    internal async Task StopBotCoreAsync()
+    {
+        await _discordSocketClient.StopAsync();
+        await _discordSocketClient.DisposeAsync();
+    }
 
-        internal DateTime StartupTime { get; } = DateTime.UtcNow;
-
-        public ConcurrentDictionary<ulong, GuildConfig> Guilds { get; } = new();
-
-        #region Core Functions
-
-        internal async Task StartBotCoreAsync()
-        {
-            RegisterCoreActions();
-            RegisterCoreVariables();
-            RegisterCoreEventHandlers();
-            RegisterCoreFilters();
-
-            SetupEventListeners();
-
-            await _discordSocketClient.LoginAsync(TokenType.Bot, _config["Discord:BotToken"]);
-            await _discordSocketClient.StartAsync();
-
-            await _discordSocketClient.SetActivityAsync(new Game("with Loaf", ActivityType.Playing));
-        }
-
-        internal async Task StopBotCoreAsync()
-        {
-            await _discordSocketClient.StopAsync();
-            await _discordSocketClient.DisposeAsync();
-        }
-
-        public async Task LoadGuildConfigsAsync()
-        {
-            try
-            {
-                using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
-                var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
-                using var iterator = container.GetItemQueryIterator<GuildConfig>();
-
-                Guilds.Clear();
-
-                while (iterator.HasMoreResults)
-                {
-                    foreach (var guild in await iterator.ReadNextAsync())
-                    {
-                        await AddGuildConfigAsync(guild);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogError(ex, "Error loading guild configs");
-            }
-        }
-
-        public async Task LoadGuildConfigAsync(ulong guildId)
+    public async Task LoadGuildConfigsAsync()
+    {
+        try
         {
             using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
             var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
-            using var iterator = container.GetItemQueryIterator<GuildConfig>($"SELECT * FROM GuildConfigs c WHERE c.GuildId = \"{guildId}\"");
+            using var iterator = container.GetItemQueryIterator<GuildConfig>();
+
+            Guilds.Clear();
 
             while (iterator.HasMoreResults)
             {
                 foreach (var guild in await iterator.ReadNextAsync())
                 {
-                    if (guild is not null)
-                    {
-                        await AddGuildConfigAsync(guild);
-                    }
-                    else
-                    {
-                        Logger.LogDebug("No guild config found for guild ID {guildId}", guildId);
-                    }
+                    await AddGuildConfigAsync(guild);
                 }
             }
         }
-
-        public async Task AddGuildConfigAsync(GuildConfig guild)
+        catch (Exception ex)
         {
-            if (Guilds.ContainsKey(guild.GuildId))
-            {
-                Guilds.TryRemove(guild.GuildId, out var _);
-            }
-
-            Guilds.TryAdd(guild.GuildId, guild);
-            await RegisterGuildCommandsAsync(guild);
+            Logger.LogError(ex, "Error loading guild configs");
         }
+    }
 
-        internal async Task RegisterGuildCommandsAsync(GuildConfig guild)
+    public async Task LoadGuildConfigAsync(ulong guildId)
+    {
+        using var cosmosClient = new CosmosClient(_config["CosmosEndpoint"], _config["CosmosKey"]);
+        var container = cosmosClient.GetContainer("CrackersBot", "CrackersBot");
+        using var iterator = container.GetItemQueryIterator<GuildConfig>($"SELECT * FROM GuildConfigs c WHERE c.GuildId = \"{guildId}\"");
+
+        while (iterator.HasMoreResults)
         {
-            var socketGuild = _discordSocketClient.GetGuild(guild.GuildId);
-
-            if (socketGuild is not null)
+            foreach (var guild in await iterator.ReadNextAsync())
             {
-                try
+                if (guild is not null)
                 {
-                    var commandsToAdd = guild.Commands
-                        .Where(c => c.Enabled)
-                        .Select(c => c.BuildCommand())
-                        .ToArray();
-
-                    await socketGuild.BulkOverwriteApplicationCommandAsync(commandsToAdd);
+                    await AddGuildConfigAsync(guild);
                 }
-                catch (Exception ex)
+                else
                 {
-                    Logger.LogError(ex, "Unable to setup guild commands for guild {guildId}", guild.GuildId);
+                    Logger.LogDebug("No guild config found for guild ID {guildId}", guildId);
                 }
             }
         }
+    }
 
-        internal async Task SendMessageToTheCaptainAsync(string message)
+    public async Task AddGuildConfigAsync(GuildConfig guild)
+    {
+        if (Guilds.ContainsKey(guild.GuildId))
         {
-            ArgumentNullException.ThrowIfNull(message);
-
-            await (await _discordSocketClient.GetUserAsync(ZUNDERSCORE_USER_ID))
-                .SendMessageAsync(message);
+            Guilds.TryRemove(guild.GuildId, out var _);
         }
 
-        internal async Task SendMessageToTheCaptainAsync(Embed? embed)
+        guild.EventHandlers.ForEach(h => h.SetGuild(guild));
+
+        Guilds.TryAdd(guild.GuildId, guild);
+        await RegisterGuildCommandsAsync(guild);
+    }
+
+    internal async Task RegisterGuildCommandsAsync(GuildConfig guild)
+    {
+        var socketGuild = _discordSocketClient.GetGuild(guild.GuildId);
+
+        if (socketGuild is not null)
         {
-            ArgumentNullException.ThrowIfNull(embed);
-
-            await (await _discordSocketClient.GetUserAsync(ZUNDERSCORE_USER_ID))
-                .SendMessageAsync(embed: embed);
-        }
-
-        #endregion
-
-        #region Actions
-
-        public ConcurrentDictionary<string, IAction> RegisteredActions { get; } = new();
-
-        public bool IsActionRegistered(string id)
-        {
-            return RegisteredActions.Keys.Any(k => k.Equals(id, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        public void RegisterAction(IAction action)
-        {
-            var id = action.GetId();
-
-            if (IsActionRegistered(id))
+            try
             {
-                Logger.LogDebug("Unable to register Action {id} as it has already been registered", id);
-                return;
+                var commandsToAdd = guild.Commands
+                    .Where(c => c.Enabled)
+                    .Select(c => c.BuildCommand())
+                    .ToArray();
+
+                await socketGuild.BulkOverwriteApplicationCommandAsync(commandsToAdd);
             }
-
-            if (RegisteredActions.TryAdd(id, action))
+            catch (Exception ex)
             {
-                Logger.LogDebug("Registered Action {id}", id);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to register Action {id} (registration failed)", id);
+                Logger.LogError(ex, "Unable to setup guild commands for guild {guildId}", guild.GuildId);
             }
         }
+    }
 
-        public void UnregisterAction(string id)
+    internal async Task SendMessageToTheCaptainAsync(string message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+
+        await (await _discordSocketClient.GetUserAsync(ZUNDERSCORE_USER_ID))
+            .SendMessageAsync(message);
+    }
+
+    internal async Task SendMessageToTheCaptainAsync(Embed? embed)
+    {
+        ArgumentNullException.ThrowIfNull(embed);
+
+        await (await _discordSocketClient.GetUserAsync(ZUNDERSCORE_USER_ID))
+            .SendMessageAsync(embed: embed);
+    }
+
+    #endregion
+
+    public async Task TriggerEvent(
+        string eventId,
+        Func<RunContext, Core.Events.EventHandler, Task<RunContext>>? contextBuilder = null
+    )
+    {
+        LogEventTriggered(eventId);
+
+        foreach (var (guildId, guild) in Guilds)
         {
-            if (!IsActionRegistered(id))
-            {
-                Logger.LogDebug("Unable to unregister Action {id} since it is not currently registered", id);
-                return;
-            }
-
-            if (RegisteredActions.TryRemove(id, out _))
-            {
-                Logger.LogDebug("Unregistered Action {id}", id);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to unregister Action {id} (removal failed)", id);
-            }
+            await _eventManager.HandleGuildEvents(eventId, guild, contextBuilder);
         }
-
-        public IAction GetRegisteredAction(string id)
-        {
-            if (!IsActionRegistered(id))
-            {
-                throw new ArgumentException($"Action {id} is not registered");
-            }
-
-            return RegisteredActions[id];
-        }
-
-        #endregion
-
-        #region Variables
-
-        public ConcurrentDictionary<string, IVariable> RegisteredVariables { get; } = new();
-
-        public bool IsVariableRegistered(string token)
-        {
-            return RegisteredVariables.Keys.Any(k => k.Equals(token, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        public void RegisterVariable(IVariable variable)
-        {
-            if (IsVariableRegistered(variable.Token))
-            {
-                Logger.LogDebug("Unable to register Variable {token} as it has already been registered", variable.Token);
-                return;
-            }
-
-            if (RegisteredVariables.TryAdd(variable.Token, variable))
-            {
-                Logger.LogDebug("Registered Variable {token}", variable.Token);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to register Variable {token} (registration failed)", variable.Token);
-            }
-        }
-
-        public void UnregisterVariable(string token)
-        {
-            if (!IsVariableRegistered(token))
-            {
-                Logger.LogDebug("Unable to unregister Variable {token} since it is not currently registered", token);
-                return;
-            }
-
-            if (RegisteredVariables.TryRemove(token, out _))
-            {
-                Logger.LogDebug("Unregistered Variable {token}", token);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to unregister Variable {token} (removal failed)", token);
-            }
-        }
-
-        #endregion
-
-        #region Event Handlers
-
-        public ConcurrentDictionary<string, IEventHandler> RegisteredEventHandlers { get; } = new();
-
-        public bool IsEventHandlerRegistered(string id)
-        {
-            return RegisteredEventHandlers.Keys.Any(k => k.Equals(id, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        public void RegisterEventHandler(IEventHandler handler)
-        {
-            var id = handler.GetId();
-
-            if (IsEventHandlerRegistered(id))
-            {
-                Logger.LogDebug("Unable to register Event Handler {id} as it has already been registered", id);
-                return;
-            }
-
-            if (RegisteredEventHandlers.TryAdd(id, handler))
-            {
-                Logger.LogDebug("Registered Event Handler {id}", id);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to register Event Handler {id} (registration failed)", id);
-            }
-        }
-
-        public void UnregisterEventHandler(string id)
-        {
-            if (!IsEventHandlerRegistered(id))
-            {
-                Logger.LogDebug("Unable to unregister Event Handler {id} since it is not currently registered", id);
-                return;
-            }
-
-            if (RegisteredEventHandlers.TryRemove(id, out _))
-            {
-                Logger.LogDebug("Unregistered Event Handler {id}", id);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to unregister Event Handler {id} (removal failed)", id);
-            }
-        }
-
-        #endregion
-
-        #region Filters
-
-        public ConcurrentDictionary<string, IFilter> RegisteredFilters { get; } = new();
-
-        public bool IsFilterRegistered(string token)
-        {
-            return RegisteredFilters.Keys.Any(k => k.Equals(token, StringComparison.InvariantCultureIgnoreCase));
-        }
-
-        public void RegisterFilter(IFilter filter)
-        {
-            var id = filter.GetId();
-
-            if (IsFilterRegistered(id))
-            {
-                Logger.LogDebug("Unable to register Filter {id} as it has already been registered", id);
-                return;
-            }
-
-            if (RegisteredFilters.TryAdd(id, filter))
-            {
-                Logger.LogDebug("Registered Filter {id}", id);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to register Filter {id} (registration failed)", id);
-            }
-        }
-
-        public void UnregisterFilter(string id)
-        {
-            if (!IsFilterRegistered(id))
-            {
-                Logger.LogDebug("Unable to unregister Filter {id} since it is not currently registered", id);
-                return;
-            }
-
-            if (RegisteredFilters.TryRemove(id, out _))
-            {
-                Logger.LogDebug("Unregistered Filter {id}", id);
-            }
-            else
-            {
-                Logger.LogDebug("Unable to unregister Filter {id} (removal failed)", id);
-            }
-        }
-
-        #endregion
-
-        #region Register core items
-
-        private void RegisterCoreActions()
-        {
-            foreach (var action in CoreHelpers.GetAllCoreActions(this))
-            {
-                RegisterAction(action);
-            }
-        }
-
-        private void RegisterCoreVariables()
-        {
-            foreach (var variable in CoreHelpers.GetAllCoreVariables(this))
-            {
-                RegisterVariable(variable);
-            }
-        }
-
-        private void RegisterCoreEventHandlers()
-        {
-            foreach (var handler in CoreHelpers.GetAllCoreEventHandlers(this))
-            {
-                RegisterEventHandler(handler);
-            }
-        }
-
-        private void RegisterCoreFilters()
-        {
-            foreach (var filter in CoreHelpers.GetAllCoreFilters(this))
-            {
-                RegisterFilter(filter);
-            }
-        }
-
-        #endregion
     }
 }

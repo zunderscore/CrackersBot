@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.DISCORD_TARGET_USER_DISPLAY_NAME)]
-    [VariableDescription("The target Discord user's display name")]
-    public class TargetUserDisplayNameVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class TargetUserDisplayNameVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.DISCORD_TARGET_USER_DISPLAY_NAME,
+        "Discord Target User Display Name",
+        "The target Discord user's display name",
+        botServices
+    );

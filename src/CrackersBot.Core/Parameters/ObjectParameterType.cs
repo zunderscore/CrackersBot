@@ -1,26 +1,25 @@
 using Newtonsoft.Json;
 
-namespace CrackersBot.Core.Parameters
+namespace CrackersBot.Core.Parameters;
+
+public class ObjectParameterType(
+    Type type,
+    bool isOptional = false
+) : ParameterType<object>(isOptional)
 {
-    public class ObjectParameterType(
-        Type type,
-        bool isOptional = false
-    ) : ParameterType<object>(isOptional)
+    public override Type Type { get; } = type;
+
+    public override object GetValue(string value)
     {
-        public override Type Type { get; } = type;
+        ValidateWithThrow(value);
 
-        public override object GetValue(string value)
+        try
         {
-            ValidateWithThrow(value);
-
-            try
-            {
-                return JsonConvert.DeserializeObject(value, Type)!;
-            }
-            catch
-            {
-                throw new ArgumentException($"{nameof(value)} is not {Type.Name}");
-            }
+            return JsonConvert.DeserializeObject(value, Type)!;
+        }
+        catch
+        {
+            throw new ArgumentException($"{nameof(value)} is not {Type.Name}");
         }
     }
 }

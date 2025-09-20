@@ -1,27 +1,31 @@
 using CrackersBot.Core.Parameters;
 using Discord;
+using Discord.WebSocket;
 
-namespace CrackersBot.Core.Actions.Discord
+namespace CrackersBot.Core.Actions.Discord;
+
+public class SendDirectMessageAction(BotServiceProvider botServices)
+    : ActionBase(
+        ACTION_ID,
+        "Send Discord Direct Message",
+        "Sends a direct message to the specified Discord user",
+        botServices
+    )
 {
-    [ActionId(ACTION_ID)]
-    [ActionName("Send Discord Direct Message")]
-    [ActionDescription("Sends a direct message to the specified Discord user")]
-    public class SendDirectMessageAction(IBotCore bot) : ActionBase(bot)
+    public const string ACTION_ID = "CrackersBot.Discord.SendDirectMessage";
+
+    public override Dictionary<string, IParameterType> ActionParameters => new() {
+        { CommonNames.DISCORD_USER_ID, new UInt64ParameterType() },
+        { CommonNames.MESSAGE_TEXT, new StringParameterType() }
+    };
+
+    public override async Task Run(Dictionary<string, object> parameters, RunContext context)
     {
-        public const string ACTION_ID = "CrackersBot.Discord.SendDirectMessage";
+        var discordClient = BotServices.GetBotService<DiscordSocketClient>();
+        var userId = (ulong)parameters[CommonNames.DISCORD_USER_ID];
+        var user = await discordClient.GetUserAsync(userId);
 
-        public override Dictionary<string, IParameterType> ActionParameters => new() {
-            { CommonNames.DISCORD_USER_ID, new UInt64ParameterType() },
-            { CommonNames.MESSAGE_TEXT, new StringParameterType() }
-        };
-
-        public override async Task Run(Dictionary<string, object> parameters, RunContext context)
-        {
-            var userId = (ulong)parameters[CommonNames.DISCORD_USER_ID];
-            var user = await Bot.DiscordClient.GetUserAsync(userId);
-
-            await user.CreateDMChannelAsync();
-            await user.SendMessageAsync((string)parameters[CommonNames.MESSAGE_TEXT]);
-        }
+        await user.CreateDMChannelAsync();
+        await user.SendMessageAsync((string)parameters[CommonNames.MESSAGE_TEXT]);
     }
 }

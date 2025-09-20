@@ -1,25 +1,31 @@
 
-using CrackersBot.Core.Parameters;
 using System.Reflection;
+using CrackersBot.Core.Parameters;
 
-namespace CrackersBot.Core.Filters
+namespace CrackersBot.Core.Filters;
+
+public abstract class FilterBase(
+    string id,
+    string name,
+    string description,
+    BotServiceProvider botServices
+) : IFilter
 {
-    public abstract class FilterBase : IFilter
-    {
-        public abstract Dictionary<string, IParameterType> FilterConditions { get; }
-        public abstract Dictionary<string, IParameterType> FilterParameters { get; }
+    public BotServiceProvider BotServices { get; } = botServices;
 
-        public string GetId() => GetType().GetCustomAttribute<FilterIdAttribute>()?.Id ?? String.Empty;
-        public string GetName() => GetType().GetCustomAttribute<FilterNameAttribute>()?.Name ?? String.Empty;
-        public string GetDescription() => GetType().GetCustomAttribute<FilterDescriptionAttribute>()?.Description ?? String.Empty;
+    public abstract Dictionary<string, IParameterType> FilterConditions { get; }
+    public abstract Dictionary<string, IParameterType> FilterParameters { get; }
 
-        public virtual bool ValidateParameters(Dictionary<string, string> rawParams)
-            => ParameterHelpers.ValidateParameters(FilterParameters, rawParams);
+    public string Id { get; } = id ?? String.Empty;
+    public string Name { get; } = name ?? String.Empty;
+    public string Description { get; } = description ?? String.Empty;
 
-        public abstract bool Pass(
-            RunContext context,
-            Dictionary<string, string>? rawConditions = null,
-            FilterInclusionType inclusionType = FilterInclusionType.Include
-        );
-    }
+    public virtual bool ValidateParameters(Dictionary<string, string> rawParams)
+        => ParameterHelpers.ValidateParameters(FilterParameters, rawParams);
+
+    public abstract bool Pass(
+        RunContext context,
+        Dictionary<string, string>? rawConditions = null,
+        FilterInclusionType inclusionType = FilterInclusionType.Include
+    );
 }

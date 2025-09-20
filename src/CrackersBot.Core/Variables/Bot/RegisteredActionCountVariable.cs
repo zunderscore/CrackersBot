@@ -1,10 +1,15 @@
-namespace CrackersBot.Core.Variables.Bot
+using CrackersBot.Core.Actions;
+
+namespace CrackersBot.Core.Variables.Bot;
+
+public class RegisteredActionCountVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.REGISTERED_ACTION_COUNT,
+        "Registered Action Count",
+        "The total number of actions registered in CrackersBot",
+        botServices
+    )
 {
-    [VariableToken(CommonNames.REGISTERED_ACTION_COUNT)]
-    [VariableDescription("The total number of actions registered in CrackersBot")]
-    public class RegisteredActionCountVariable(IBotCore bot) : VariableBase(bot)
-    {
-        public override string GetValue(RunContext context)
-            => Bot.RegisteredActions.Count.ToString();
-    }
+    public override string GetValue(RunContext context)
+        => BotServices.GetBotService<IActionManager>().RegisteredActions.Count.ToString();
 }

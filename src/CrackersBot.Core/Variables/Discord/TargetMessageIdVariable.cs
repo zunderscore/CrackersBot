@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.DISCORD_TARGET_MESSAGE_ID)]
-    [VariableDescription("The target Discord message's ID")]
-    public class TargetMessageIdVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class TargetMessageIdVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.DISCORD_TARGET_MESSAGE_ID,
+        "Discord Target Message ID",
+        "The target Discord message's ID",
+        botServices
+    );

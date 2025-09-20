@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.IS_NSFW)]
-    [VariableDescription("Whether or not a channel is marked as NSFW")]
-    public class IsNsfwVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class IsNsfwVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.IS_NSFW,
+        "Is NSFW?",
+        "Whether or not a channel is marked as NSFW",
+        botServices
+    );

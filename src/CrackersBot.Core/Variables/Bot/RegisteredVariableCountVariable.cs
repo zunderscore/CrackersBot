@@ -1,10 +1,13 @@
-namespace CrackersBot.Core.Variables.Bot
+namespace CrackersBot.Core.Variables.Bot;
+
+public class RegisteredVariableCountVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.REGISTERED_VARIABLE_COUNT,
+        "Registered Variable Count",
+        "The total number of variables registered in CrackersBot",
+        botServices
+    )
 {
-    [VariableToken(CommonNames.REGISTERED_VARIABLE_COUNT)]
-    [VariableDescription("The total number of variables registered in CrackersBot")]
-    public class RegisteredVariableCountVariable(IBotCore bot) : VariableBase(bot)
-    {
-        public override string GetValue(RunContext context)
-            => Bot.RegisteredVariables.Count.ToString();
-    }
+    public override string GetValue(RunContext context)
+        => BotServices.GetBotService<IVariableManager>().RegisteredVariables.Count.ToString();
 }

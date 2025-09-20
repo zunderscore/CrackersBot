@@ -1,15 +1,14 @@
 using CrackersBot.Core.Parameters;
 
-namespace CrackersBot.Core.Actions
+namespace CrackersBot.Core.Actions;
+
+public interface IAction : IRegisteredItem, IBotServiceConsumer
 {
-    public interface IAction : IBotConsumer, IRegisteredItem
-    {
-        Dictionary<string, IParameterType> ActionParameters { get; }
+    Dictionary<string, IParameterType> ActionParameters { get; }
 
-        bool ValidateParameters(Dictionary<string, string> parameters);
+    bool ValidateParameters(Dictionary<string, string> parameters);
 
-        bool DoPreRunCheck(Dictionary<string, string> rawParams);
+    bool DoPreRunCheck(Dictionary<string, string> rawParams);
 
-        Task Run(Dictionary<string, object> parameters, RunContext context);
-    }
+    Task Run(Dictionary<string, object> parameters, RunContext context);
 }

@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.DISCORD_USER_AVATAR_URL)]
-    [VariableDescription("The Discord user avatar URL")]
-    public class UserAvatarUrlVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class UserAvatarUrlVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.DISCORD_USER_AVATAR_URL,
+        "Discord User Avatar URL",
+        "The Discord user avatar URL",
+        botServices
+    );

@@ -1,9 +1,8 @@
-namespace CrackersBot.Core
+namespace CrackersBot.Core;
+
+public interface IRegisteredItem
 {
-    public interface IRegisteredItem
-    {
-        string GetId();
-        string GetName();
-        string GetDescription();
-    }
+    string Id { get; }
+    string Name { get; }
+    string Description { get; }
 }

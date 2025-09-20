@@ -1,3 +1,6 @@
+using CrackersBot.Core;
+using CrackersBot.Web.Services;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders();
@@ -19,10 +22,8 @@ if (!builder.Environment.IsDevelopment())
     );
 }
 
-builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
-builder.Services.AddSingleton<CrackersBot.Core.IBotCore, CrackersBot.Web.Services.BotCore>();
-
-builder.Services.AddHostedService<CrackersBot.Web.Services.BotService>();
+builder.Services.AddCrackersBotCore<BotCore>();
+builder.Services.AddHostedService<BotService>();
 
 // Add services to the container.
 builder.Services.AddRazorPages();

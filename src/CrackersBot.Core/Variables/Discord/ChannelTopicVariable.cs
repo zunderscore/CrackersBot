@@ -1,6 +1,9 @@
-namespace CrackersBot.Core.Variables.Discord
-{
-    [VariableToken(CommonNames.DISCORD_CHANNEL_TOPIC)]
-    [VariableDescription("The Discord channel topic")]
-    public class ChannelTopicVariable(IBotCore bot) : VariableBase(bot) { }
-}
+namespace CrackersBot.Core.Variables.Discord;
+
+public class ChannelTopicVariable(BotServiceProvider botServices)
+    : VariableBase(
+        CommonNames.DISCORD_CHANNEL_TOPIC,
+        "Discotd Channel Topic",
+        "The Discord channel topic",
+        botServices
+    );

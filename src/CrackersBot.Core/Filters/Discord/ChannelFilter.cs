@@ -1,49 +1,50 @@
 using CrackersBot.Core.Parameters;
 
-namespace CrackersBot.Core.Filters.Discord
+namespace CrackersBot.Core.Filters.Discord;
+
+public class ChannelFilter(BotServiceProvider botServices)
+    : FilterBase(
+        FILTER_ID,
+        "Discord Channel",
+        "The Discord channel an action was performed in",
+        botServices)
 {
-    [FilterId(FILTER_ID)]
-    [FilterName("Discord Channel")]
-    [FilterDescription("The Discord channel an action was performed in")]
-    public class ChannelFilter : FilterBase
+    public const string FILTER_ID = "CrackersBot.Discord.Channel";
+
+    public override Dictionary<string, IParameterType> FilterConditions => new() {
+        { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() }
+    };
+
+    public override Dictionary<string, IParameterType> FilterParameters => new() {
+        { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() }
+    };
+
+    public override bool Pass(
+        RunContext context,
+        Dictionary<string, string>? rawConditions = null,
+        FilterInclusionType inclusionType = FilterInclusionType.Include)
     {
-        public const string FILTER_ID = "CrackersBot.Discord.Channel";
+        if (!ParameterHelpers.ValidateParameters(FilterConditions, rawConditions ?? [])) return false;
 
-        public override Dictionary<string, IParameterType> FilterConditions => new() {
-            { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() }
-        };
+        var parsedConditions = ParameterHelpers.GetParameterValues(FilterConditions, rawConditions ?? []);
 
-        public override Dictionary<string, IParameterType> FilterParameters => new() {
-            { CommonNames.DISCORD_CHANNEL_ID, new UInt64ParameterType() }
-        };
-
-        public override bool Pass(
-            RunContext context,
-            Dictionary<string, string>? rawConditions = null,
-            FilterInclusionType inclusionType = FilterInclusionType.Include)
+        if (!parsedConditions.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out object? channelIdConditionObj)
+            || channelIdConditionObj is not ulong channelIdCondition)
         {
-            if (!ParameterHelpers.ValidateParameters(FilterConditions, rawConditions ?? [])) return false;
-
-            var parsedConditions = ParameterHelpers.GetParameterValues(FilterConditions, rawConditions ?? []);
-
-            if (!parsedConditions.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out object? channelIdConditionObj)
-                || channelIdConditionObj is not ulong channelIdCondition)
-            {
-                return false;
-            }
-
-            if (!context.Metadata.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out string? channelIdParamString)
-                || !UInt64.TryParse(channelIdParamString, out var channelIdParam))
-            {
-                return false;
-            }
-
-            return inclusionType switch
-            {
-                FilterInclusionType.Include => channelIdCondition == channelIdParam,
-                FilterInclusionType.Exclude => channelIdCondition != channelIdParam,
-                _ => true,
-            };
+            return false;
         }
+
+        if (!context.Metadata.TryGetValue(CommonNames.DISCORD_CHANNEL_ID, out string? channelIdParamString)
+            || !UInt64.TryParse(channelIdParamString, out var channelIdParam))
+        {
+            return false;
+        }
+
+        return inclusionType switch
+        {
+            FilterInclusionType.Include => channelIdCondition == channelIdParam,
+            FilterInclusionType.Exclude => channelIdCondition != channelIdParam,
+            _ => true,
+        };
     }
 }

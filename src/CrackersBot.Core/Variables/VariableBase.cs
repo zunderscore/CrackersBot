@@ -1,17 +1,21 @@
+namespace CrackersBot.Core.Variables;
 
-using System.Reflection;
-
-namespace CrackersBot.Core.Variables
+public abstract class VariableBase(
+    string token,
+    string name,
+    string description,
+    BotServiceProvider botServices
+) : IVariable
 {
-    public abstract class VariableBase(IBotCore bot) : IVariable
+    public BotServiceProvider BotServices { get; } = botServices;
+
+    public string Token => Id;
+    public string Id { get; } = token ?? String.Empty;
+    public string Name { get; } = name ?? String.Empty;
+    public string Description { get; } = description ?? String.Empty;
+
+    public virtual string GetValue(RunContext context)
     {
-        public IBotCore Bot { get; } = bot;
-
-        public string Token => GetType().GetCustomAttribute<VariableTokenAttribute>()?.Token ?? String.Empty;
-
-        public virtual string GetValue(RunContext context)
-        {
-            return DefaultVariableProcessor.GetValue(Token, context);
-        }
+        return BotServices.GetBotService<IVariableManager>().GetValue(Token, context);
     }
 }

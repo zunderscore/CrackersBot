@@ -1,19 +1,18 @@
 using CrackersBot.Core;
 
-namespace CrackersBot.Web.Services
+namespace CrackersBot.Web.Services;
+
+public class BotService(IBotCore bot) : IHostedService
 {
-    public class BotService(IBotCore bot) : IHostedService
+    private readonly BotCore _bot = (BotCore)bot;
+
+    public async Task StartAsync(CancellationToken cancellationToken)
     {
-        private readonly BotCore _bot = (BotCore)bot;
+        await _bot.StartBotCoreAsync();
+    }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            await _bot.StartBotCoreAsync();
-        }
-
-        public async Task StopAsync(CancellationToken cancellationToken)
-        {
-            await _bot.StopBotCoreAsync();
-        }
+    public async Task StopAsync(CancellationToken cancellationToken)
+    {
+        await _bot.StopBotCoreAsync();
     }
 }
