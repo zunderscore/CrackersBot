@@ -71,9 +71,13 @@ public partial class EmbedInstance
         {
             foreach (var field in Fields)
             {
+                var value = field.Value.Length > 1000
+                    ? $"{field.Value[..1000]}..."
+                    : field.Value;
+
                 builder = builder.AddField(
                     field.Name,
-                    field.Value,
+                    value,
                     field.IsInline
                 );
             }
