@@ -1,3 +1,7 @@
 {
-    "provider": "Dotnet"
+    "$schema": "https://schema.railpack.com",
+    "provider": "Dotnet",
+    "deploy": {
+        "startCommand": "./out/CrackersBot.Web"
+    }
 }
